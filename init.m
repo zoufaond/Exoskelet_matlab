@@ -5,6 +5,7 @@
 %             -0.086922   ];
 
 % initial position
-h_0 = 0.5*h_ej;
+% h_0 = 0.5*h_ej;
+h_0 = 0.13020200000000-0.06;
 r_0 = sqrt((r_ej^2)*(1-h_0^2/h_ej^2));
 phi_0 = atan(-(r_ej*h_0)/(h_ej^2*sqrt(1-h_0^2/h_ej^2)));
