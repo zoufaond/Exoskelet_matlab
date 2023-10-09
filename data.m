@@ -16,7 +16,7 @@ psi_ej = 0; % rot y
 mu_ej = 0; % rot x
 phi_ej = 0; % rot y
 % ellipsoidal joint
-r_ej = 0.087;
+r_ej = 0.0821;
 h_ej = 0.15;
 
 k_ej = 100;

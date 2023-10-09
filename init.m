@@ -1,8 +1,8 @@
 %% ellipsoid joint
 % scapula SHR frame initional position
-SHR_0 = [   -0.094965
-            +0.130202
-            -0.086922   ];
+% SHR_0 = [   -0.094965
+%             +0.130202
+%             -0.086922   ];
 
 % initial position
 h_0 = 0.5*h_ej;
