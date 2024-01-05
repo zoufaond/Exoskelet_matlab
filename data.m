@@ -9,9 +9,9 @@ f_koef = 1e-2;
 
 %% scapulohumeral rhythm
 % translation
-x_ej = -0.05;
-y_ej = 0.06;
-z_ej = -0.03;
+x_ej = 0; %-0.05
+y_ej = 0; %.06
+z_ej = -0; %.03
 % euler angles
 psi_ej = 0; % rot y
 mu_ej = 0; % rot x
