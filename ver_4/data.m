@@ -27,3 +27,12 @@ T_d = 1e-20;
 % binding springs
 k_S = 500;
 b_S = 50;
+
+%%% Muscles init %%%
+Glenohumeral = readmatrix('Glenohumeral_muscles.xlsx');
+Glenohumeral_F0M = Glenohumeral(2:end,2)*0.01;
+Glenohumeral_l0  = Glenohumeral(2:end,3);
+
+Scapulothoracic = readmatrix('Scapulothoracic_muscles.xlsx');
+Scapulothoracic_F0M = Scapulothoracic(2:end,2)*0.01;
+Scapulothoracic_l0  = Scapulothoracic(2:end,3);
