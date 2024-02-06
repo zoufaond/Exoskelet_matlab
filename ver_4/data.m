@@ -7,7 +7,7 @@ s_max = 0.005;
 t_f = 5;
 % gravitation
 g = [0,-9.80665,0];
-damp = 1e-3;
+damp = 1e-1;
 
 %% scapulohumeral rhythm
 % translation
