@@ -1,4 +1,4 @@
-syms t x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 m1 m2 m3 c k g IUxx IUyy IUzz IUxy IUyz IUzx ILxx ILyy ILzz ILxy ILyz ILzx rigid0Px rigid0Py rigid0Pz rigid2Cx rigid2Cy rigid2Cz rigid1Px rigid1Py rigid1Pz rigid1Cx rigid1Cy rigid1Cz x_cont1 y_cont1 z_cont1 x_cont2 y_cont2 z_cont2 k_contact mx my mz ax ay az eps real
+syms t x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18 m1 m2 m3 c k g IMxx IMyy IMzz IMxy IMyz IMzx IUxx IUyy IUzz IUxy IUyz IUzx ILxx ILyy ILzz ILxy ILyz ILzx rigid0Px rigid0Py rigid0Pz rigid2Cx rigid2Cy rigid2Cz rigid1Px rigid1Py rigid1Pz rigid1Cx rigid1Cy rigid1Cz x_cont1 y_cont1 z_cont1 x_cont2 y_cont2 z_cont2 k_contact mx my mz ax ay az eps real
 q = [x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 x11 x12 x13 x14 x15 x16 x17 x18];
 m = [m1,m2,m3];
 IU = [IUxx IUyy IUzz IUxy IUyz IUzx];

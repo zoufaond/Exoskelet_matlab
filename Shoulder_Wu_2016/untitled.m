@@ -1,0 +1,1 @@
+rigid1C = sym('rigid1C',[1 3])
