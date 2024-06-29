@@ -1,6 +1,7 @@
 % clc
 % clear all
 addpath('..\equations_of_motion\')
+addpath('..\Muscle_simplified_model')
 addpath('..\')
 load('data_model.mat')
 load("das3_simplified.mat")
@@ -35,13 +36,14 @@ nlobj.Optimization.CustomCostFcn = @(X,U,e,data,model) sum(sum(U(1:p_hor,:).^2))
 nlobj.Optimization.CustomEqConFcn = @(X,U,data,model) X(end,8)'-0.3;
 nlobj.Optimization.ReplaceStandardCost = true;
 nlobj.Optimization.SolverOptions.Display = "iter-detailed";
-nlobj.Optimization.SolverOptions.MaxIterations = 1e6;
-nlobj.Optimization.SolverOptions.StepTolerance = 1e-7;
-nlobj.Optimization.SolverOptions.OptimalityTolerance = 1e-5;
-nlobj.Optimization.SolverOptions.ConstraintTolerance = 1e-5;
-nlobj.Optimization.SolverOptions.FunctionTolerance = 1e-6;
+nlobj.Optimization.SolverOptions.MaxIterations = 1e4;
+% nlobj.Optimization.SolverOptions.StepTolerance = 1e-7;
+% nlobj.Optimization.SolverOptions.OptimalityTolerance = 1e-5;
+% nlobj.Optimization.SolverOptions.ConstraintTolerance = 1e-5;
+% nlobj.Optimization.SolverOptions.FunctionTolerance = 1e-6;
 nlobj.Optimization.SolverOptions.MaxFunctionEvaluations = 1e7;
 nlobj.Optimization.SolverOptions.Algorithm = "interior-point";
+nlobj.Optimization.SolverOptions.UseParallel = true;
 
 nloptions = nlmpcmoveopt;
 nloptions.Parameters = {model};
