@@ -4,10 +4,10 @@ addpath equations_of_motion\
 addpath('Muscle_simplified_model\')
 load('data_model.mat')
 
-SC_yzx = [-33.486 5.002 32.914]*pi/180;
-AC_yzx = [45.571 0.458 -12.062]*pi/180;
-GH_yzy = [43.864 -20 -0.218]*pi/180;
-EL_x = 0*pi/180;
+SC_yzx = [-21.784 6.303 0]*pi/180;
+AC_yzx = [46.295 4.899 -1.180]*pi/180;
+GH_yzy = [0 5 0]*pi/180;
+EL_x = 10*pi/180;
 PS_y = 5*pi/180;
 initCond = [SC_yzx,AC_yzx,GH_yzy,EL_x,zeros(1,10)]';
 load('das3_simplified.mat')
@@ -34,7 +34,7 @@ A = [];
 b = [];
 Aeq = [];
 beq = [];
-AC_bndrs = [ones(3,1)*0.01;ones(3,1)*0.15;ones(4,1)*0.01];
+AC_bndrs = [ones(3,1)*0.01;ones(3,1)*0.15;ones(4,1)*0.005];
 lb = [initCond(1:10)-AC_bndrs;fmax_vec-fmax_vec*0.5;lceopt_vec-lceopt_vec*0.7];
 ub = [initCond(1:10)+AC_bndrs;fmax_vec+fmax_vec*10000;lceopt_vec+lceopt_vec*0.05];
 % nonlcon =@(x) [0,0];
@@ -52,11 +52,11 @@ fmax_optim = x_new(11:11+nmus-1);
 lceopt_optim = x_new(11+nmus:end);
 lslack_optim = lslack_vec;
 initCond_optim = [x_new(1:10);zeros(10,1)];
-model.q_fmax_lceopt_InOut.fmax_optim = fmax_optim;
-model.q_fmax_lceopt_InOut.lceopt_optim = lceopt_optim;
-model.q_fmax_lceopt_InOut.lslack_optim = lslack_optim;
-model.q_fmax_lceopt_InOut.initCond_optim = initCond_optim;
-% save('data_model.mat','model')
+model.q_fmax_lceopt_InOut2.fmax_optim = fmax_optim;
+model.q_fmax_lceopt_InOut2.lceopt_optim = lceopt_optim;
+model.q_fmax_lceopt_InOut2.lslack_optim = lslack_optim;
+model.q_fmax_lceopt_InOut2.initCond_optim = initCond_optim;
+save('data_model.mat','model')
 %%
 function [c,ceq] = moment_equilibrium(t,q,act,fmax_vec,lceopt_vec,lslack_vec,model)
     x = [q(1:10);zeros(10,1)];

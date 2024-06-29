@@ -23,4 +23,4 @@ end
 % lslack_optim = model.q_fmax_lceopt3.lslack_optim;
 % initCond_optim = model.q_fmax_lceopt3.initCond_optim;
 activ = zeros(35,1);
-activ(10:12) = 0.1;
+% activ(10:12) = 0.1;

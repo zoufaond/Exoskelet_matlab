@@ -2,6 +2,7 @@
 % clear all
 addpath('..\equations_of_motion\')
 addpath('..\Muscle_simplified_model')
+addpath('..\Functions\')
 addpath('..\')
 load('data_model.mat')
 load("das3_simplified.mat")
@@ -21,19 +22,17 @@ nlobj.MV(i).Min = 0;
 nlobj.MV(i).Max = 1e4;
 end
 
-scale = 0.3;
-trajectory = (sin(linspace(0,pi,p_hor)-pi/2)'+1)*scale+x0(2);
-% traj = [trajectory,trajectory*0.5,trajectory*0.4];
-% traj = repmat(x0,1,p_hor)';
-
+traj = create_abduction_traj(model.q_fmax_lceopt_InOut2.initCond_optim,p_hor);
+%%
 nlobj.PredictionHorizon = p_hor;
 nlobj.ControlHorizon = c_hor;
 nlobj.Model.StateFcn = "nlmpc_fun";
 % +(sum((X(10:p_hor,1)-0).^2)+sum((X(10:p_hor,2)-0.3).^2))*100
 
 nlobj.Model.NumberOfParameters = 1;
-nlobj.Optimization.CustomCostFcn = @(X,U,e,data,model) sum(sum(U(1:p_hor,:).^2)); %+ sum(sum((X(1:p_hor,2)-trajectory).^2))
-nlobj.Optimization.CustomEqConFcn = @(X,U,data,model) X(end,8)'-0.3;
+% nlobj.Optimization.CustomCostFcn = @(X,U,e,data,model) sum(sum((Humerus_to_Thorax_matrix(rotxyz(X(end,:)))-traj(:,end)').^2)) + sum(sum(U(1:p_hor,:).^2));
+nlobj.Optimization.CustomCostFcn = @(X,U,e,data,model) sum( (rotxyz(Humerus_to_Thorax_matrix(X(end,:)))-traj(:,end)').^2 );
+% nlobj.Optimization.CustomEqConFcn = @(X,U,data,model) ;
 nlobj.Optimization.ReplaceStandardCost = true;
 nlobj.Optimization.SolverOptions.Display = "iter-detailed";
 nlobj.Optimization.SolverOptions.MaxIterations = 1e4;
