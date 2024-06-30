@@ -4,10 +4,10 @@ addpath('equations_of_motion\')
 addpath('Muscle_simplified_model\')
 load('data_model.mat')
 load("das3_simplified.mat")
-SC_yzx = [-33.486 5.002 32.914]*pi/180;
-AC_yzx = [45.571 0.458 -12.062]*pi/180;
-GH_yzy = [43.864 -20 -0.218]*pi/180;
-EL_x = 0*pi/180;
+SC_yzx = [-21.784 6.303 0]*pi/180;
+AC_yzx = [46.295 4.899 -1.180]*pi/180;
+GH_yzy = [0 5 0]*pi/180;
+EL_x = 10*pi/180;
 PS_y = 5*pi/180;
 initCond = [SC_yzx,AC_yzx,GH_yzy,EL_x,zeros(1,10)]';
 muscles = model_simpl.muscles;
