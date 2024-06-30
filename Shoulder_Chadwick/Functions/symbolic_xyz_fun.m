@@ -2,7 +2,8 @@ q = sym('q',[9 1]);
 
 
 [rotx,roty,rotz] = rotxyz(hum_thor_mat(q));
-matlabFunction(rotx,roty,rotz,'File','rotxy_sym','Vars',{q})
+angles = [rotx;roty;rotz];
+matlabFunction(angles,'File','rotxyz_sym','Vars',{q})
 
 function mat = hum_thor_mat(q)
     mat = Ryzx(q(1:3))*Ryzx(q(4:6))*Ryzyy(q(7:9));
