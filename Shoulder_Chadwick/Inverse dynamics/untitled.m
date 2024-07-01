@@ -2,8 +2,8 @@ load('data_model.mat')
 x0 = model.q_fmax_lceopt_InOut2.initCond_optim(1:10);
 % ID_fun([x0;zeros(10,1);zeros(10,1)],zeros(10,1),zeros(10,1),zeros(35,1),model)
 
-scale = 0.5;
-n = 5;
+scale = 0.2;
+n = 3;
 t_end = 1;
 [traj,q,dq,ddq] = create_abduction_traj(x0,n,t_end,scale);
 %%
