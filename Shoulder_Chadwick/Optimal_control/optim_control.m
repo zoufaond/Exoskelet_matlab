@@ -3,7 +3,7 @@
 addpath('..\equations_of_motion\')
 addpath('..\Muscle_simplified_model')
 addpath('..\Functions\')
-addpath('..\Inverse Dynamics\')
+addpath('..\Inverse dynamics\')
 addpath('..\')
 load('data_model.mat')
 load("das3_simplified.mat")
@@ -13,9 +13,9 @@ nx = 20;
 ny = 20;
 nu = 35;
 nlobj = nlmpc(nx,ny,nu);
-Ts = 0.05;
-p_hor = 20;
-c_hor = 20;
+Ts = 0.02;
+p_hor = 10;
+c_hor = 10;
 sim_time = Ts*p_hor;
 nlobj.Ts = Ts;
 x0 = model.q_fmax_lceopt_InOut2.initCond_optim;
@@ -35,7 +35,7 @@ for i=11:20
 end
 
 
-[~,q_traj,~,~] = create_abduction_traj(x0,p_hor,p_hor*Ts,0.4);
+[~,q_traj,~,~] = create_abduction_traj(x0,p_hor,p_hor*Ts,0.2);
 %%
 nlobj.PredictionHorizon = p_hor;
 nlobj.ControlHorizon = c_hor;
@@ -43,13 +43,13 @@ nlobj.Model.StateFcn = "nlmpc_fun";
 % +(sum((X(10:p_hor,1)-0).^2)+sum((X(10:p_hor,2)-0.3).^2))*100
 
 nlobj.Model.NumberOfParameters = 1;
-nlobj.Optimization.CustomCostFcn = @(X,U,e,data,model) sum(sum((X(2:end,1:10)-q_traj').^2)) + 1e-7*sum(sum(U(1:end,:).^2));
+nlobj.Optimization.CustomCostFcn = @(X,U,e,data,model) 1e-10*sum(sum((X(2:end,1:10)-q_traj').^2));% + 1e-7*sum(sum(U(1:end,:).^2));
 % nlobj.Optimization.CustomCostFcn = @(X,U,e,data,model) sum(sum((rotxyz_sym(X(end,:)')-traj).^2)) + sum(sum(U(1:p_hor,:).^2));
 % nlobj.Optimization.CustomEqConFcn = @(X,U,data,model) ;
 nlobj.Optimization.ReplaceStandardCost = true;
 nlobj.Optimization.SolverOptions.Display = "iter-detailed";
 nlobj.Optimization.SolverOptions.MaxIterations = 1e4;
-nlobj.Optimization.SolverOptions.StepTolerance = 1e-20;
+nlobj.Optimization.SolverOptions.StepTolerance = 1e-10;
 % nlobj.Optimization.SolverOptions.OptimalityTolerance = 1e-5;
 % nlobj.Optimization.SolverOptions.ConstraintTolerance = 1e-5;
 % nlobj.Optimization.SolverOptions.FunctionTolerance = 1e-6;
