@@ -7,21 +7,21 @@ addpath('..\Inverse Dynamics\')
 addpath('..\')
 load('data_model.mat')
 load("das3_simplified.mat")
-load('InitGuess')
+load('InitGuess.mat')
 %%
 nx = 20;
 ny = 20;
 nu = 35;
 nlobj = nlmpc(nx,ny,nu);
-Ts = 1/3;
-p_hor = 3;
-c_hor = 3;
+Ts = 0.05;
+p_hor = 20;
+c_hor = 20;
 sim_time = Ts*p_hor;
 nlobj.Ts = Ts;
 x0 = model.q_fmax_lceopt_InOut2.initCond_optim;
 for i=1:nu
 nlobj.MV(i).Min = 0;
-nlobj.MV(i).Max = 1;
+nlobj.MV(i).Max = 12;
 end
 
 for i=1:10
@@ -30,12 +30,12 @@ for i=1:10
 end
 
 for i=11:20
-    nlobj.States(i).Min = -5;
-    nlobj.States(i).Max = 5;
+    nlobj.States(i).Min = -10;
+    nlobj.States(i).Max = 10;
 end
 
 
-[~,q_traj,~,~] = create_abduction_traj(x0,p_hor,p_hor*Ts,0.2);
+[~,q_traj,~,~] = create_abduction_traj(x0,p_hor,p_hor*Ts,0.4);
 %%
 nlobj.PredictionHorizon = p_hor;
 nlobj.ControlHorizon = c_hor;
@@ -43,7 +43,7 @@ nlobj.Model.StateFcn = "nlmpc_fun";
 % +(sum((X(10:p_hor,1)-0).^2)+sum((X(10:p_hor,2)-0.3).^2))*100
 
 nlobj.Model.NumberOfParameters = 1;
-nlobj.Optimization.CustomCostFcn = @(X,U,e,data,model) sum(sum((X(2:end,1:10)-q_traj').^2));% + 1e-4*sum(sum(U(1:end,:).^2));
+nlobj.Optimization.CustomCostFcn = @(X,U,e,data,model) sum(sum((X(2:end,1:10)-q_traj').^2)) + 1e-7*sum(sum(U(1:end,:).^2));
 % nlobj.Optimization.CustomCostFcn = @(X,U,e,data,model) sum(sum((rotxyz_sym(X(end,:)')-traj).^2)) + sum(sum(U(1:p_hor,:).^2));
 % nlobj.Optimization.CustomEqConFcn = @(X,U,data,model) ;
 nlobj.Optimization.ReplaceStandardCost = true;
@@ -61,9 +61,9 @@ nloptions = nlmpcmoveopt;
 nloptions.Parameters = {model};
 
 %%
-nloptions.X0 = [InitGuess.X0(:,1),InitGuess.X0]';
-nloptions.MV0 =[InitGuess.MV0(:,1),InitGuess.MV0]';
-u0 = InitGuess.MV0(:,1)*0;
+nloptions.X0 = [InitGuess.X0]';
+nloptions.MV0 =[InitGuess.MV0]';
+u0 = InitGuess.MV0(:,1);
 validateFcns(nlobj,x0,u0,[],{model});
 %%
 
