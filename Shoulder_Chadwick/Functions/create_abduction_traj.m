@@ -8,8 +8,8 @@ Abduction = (sin(linspace(0,pi,n)-pi/2)'+1)*scale;
     end
 h = t_end/n;
 dq = diff(q,1,2)/h;
-dq = [dq,dq(:,end)];
+dq = [zeros(10,1),dq];
 ddq = diff(q,2,2)/(h^2);
-ddq = [ddq(:,1),ddq,ddq(:,end)];
+ddq = [zeros(10,1),ddq,ddq(:,end)];
 traj = [x;y;z];
 end

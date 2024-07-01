@@ -38,12 +38,12 @@ nlobj.Optimization.CustomCostFcn = @(X,U,e,data,model) 1000*sum(sum((X(1:p_hor,1
 nlobj.Optimization.ReplaceStandardCost = true;
 nlobj.Optimization.SolverOptions.Display = "iter-detailed";
 nlobj.Optimization.SolverOptions.MaxIterations = 1e4;
-% nlobj.Optimization.SolverOptions.StepTolerance = 1e-12;
+nlobj.Optimization.SolverOptions.StepTolerance = 1e-12;
 % nlobj.Optimization.SolverOptions.OptimalityTolerance = 1e-5;
 % nlobj.Optimization.SolverOptions.ConstraintTolerance = 1e-5;
 % nlobj.Optimization.SolverOptions.FunctionTolerance = 1e-6;
 nlobj.Optimization.SolverOptions.MaxFunctionEvaluations = 1e7;
-nlobj.Optimization.SolverOptions.Algorithm = "interior-point";
+nlobj.Optimization.SolverOptions.Algorithm = "sqp";
 nlobj.Optimization.SolverOptions.UseParallel = true;
 
 nloptions = nlmpcmoveopt;

@@ -21,6 +21,6 @@ nonlcon = @(x) ID_fun(q(:,i),dq(:,i),ddq(:,i),x(:,1),model);
 x(:,i) = fmincon(fun,x0,A,b,Aeq,beq,lb,ub,nonlcon,options);
 end
 %%
-% InitGuess.MV0 = x;
-% InitGuess.X0 = [q;dq];
-% save('InitGuess.mat','InitGuess')
+InitGuess.MV0 = x;
+InitGuess.X0 = [q;dq];
+save('InitGuess.mat','InitGuess')
