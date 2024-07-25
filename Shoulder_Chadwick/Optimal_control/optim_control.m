@@ -13,9 +13,10 @@ nx = 20;
 ny = 20;
 nu = 35;
 nlobj = nlmpc(nx,ny,nu);
-Ts = 0.02;
-p_hor = 10;
-c_hor = 10;
+Ts = 0.1;
+p_hor = 5;
+c_hor = 5;
+scale = 0.01;
 sim_time = Ts*p_hor;
 nlobj.Ts = Ts;
 x0 = model.q_fmax_lceopt_InOut2.initCond_optim;
@@ -35,7 +36,7 @@ for i=11:20
 end
 
 
-[~,q_traj,~,~] = create_abduction_traj(x0,p_hor,p_hor*Ts,0.2);
+[~,q_traj,~,~] = create_abduction_traj(x0,p_hor,p_hor*Ts,scale);
 %%
 nlobj.PredictionHorizon = p_hor;
 nlobj.ControlHorizon = c_hor;
@@ -43,9 +44,7 @@ nlobj.Model.StateFcn = "nlmpc_fun";
 % +(sum((X(10:p_hor,1)-0).^2)+sum((X(10:p_hor,2)-0.3).^2))*100
 
 nlobj.Model.NumberOfParameters = 1;
-nlobj.Optimization.CustomCostFcn = @(X,U,e,data,model) 1e-10*sum(sum((X(2:end,1:10)-q_traj').^2));% + 1e-7*sum(sum(U(1:end,:).^2));
-% nlobj.Optimization.CustomCostFcn = @(X,U,e,data,model) sum(sum((rotxyz_sym(X(end,:)')-traj).^2)) + sum(sum(U(1:p_hor,:).^2));
-% nlobj.Optimization.CustomEqConFcn = @(X,U,data,model) ;
+nlobj.Optimization.CustomCostFcn = @(X,U,e,data,model) sum(sum((X(2:end,1:10)-q_traj').^2)) + 1e-5*sum(sum(U(1:end,:).^2));
 nlobj.Optimization.ReplaceStandardCost = true;
 nlobj.Optimization.SolverOptions.Display = "iter-detailed";
 nlobj.Optimization.SolverOptions.MaxIterations = 1e4;
