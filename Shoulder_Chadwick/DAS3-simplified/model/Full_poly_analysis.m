@@ -1,19 +1,16 @@
 % function musclepath_poly(muscles,mydir,musclepolyfile)
 clearvars
 clc
-osimfile = 'das3_simplified.osim';
+osimfile = 'das3_clav_scap_orig.osim';
 model = das3_readosim(osimfile);
-mydir = 'newpol_quat';
+mydir = 'newpol_modifiedModel';
 muscles = model.muscles;
-musclepolyfile = 'musclefile';
 
 
 for imus = 1:length(muscles)
     
-    
-    
     for EULorQ = 1:2
-    % imus = 22;
+
     musfilename = [mydir,'\path_',muscles{imus}.name,'.mat'];
     ma = load(musfilename);
     mus = muscles{imus};
@@ -112,7 +109,7 @@ for imus = 1:length(muscles)
     % solve the full model with npar-1 terms
     p = A\b;		% compute coefficients of the best fitting model
     bpred = A*p;	% these are the moment arms predicted by this model
-    res = (bpred-b)./b;	% residuals
+    res = (bpred-b);	% residuals
     resJac = res(ndofs*num_data);
     resLength = res((ndofs+1)*num_data);
     RMSfull = (sqrt(sum(res.^2)/tot_data));		% RMS of residuals, in mm

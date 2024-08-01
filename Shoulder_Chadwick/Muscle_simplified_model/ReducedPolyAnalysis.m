@@ -7,64 +7,80 @@ addpath ..\DAS3-simplified\model\newpol_quat\
 modelEul = load("das3_simplified.mat");
 modelQuat = load("das3_simplified_quaternion.mat");
 
+% generate jacobians and muscle length (as anonymous functions that depends on q1..qn coordinates)
 genEq = 0;
 [JEul,LEul,EulSize] = muscle_derivation_euler(modelEul.model_simpl,genEq);
 [JQuat,LQuat,QuatSize] = muscle_derivation_quat(modelQuat.model_simpl_quat,genEq);
 
 %%
+% this is used only for muscle names
 muscles = modelEul.model_simpl.muscles;
 
+% iterate over muscles
 for imus = 1:length(muscles)
 musfilename = ['..\DAS3-simplified\model\newpol_quat\path_',muscles{imus}.name,'.mat'];
 ma = load(musfilename);
 
 mus = muscles{imus};
 numdata = size(ma.alljnts,1);
-alljoints = {'YZX','YZX','YZX','YZY'}; % joints to change
+alljoints = {'YZX','YZX','YZX','YZY'}; % list of joints that are transformed from Eul to Quat and vice versa
 dofs = mus.dof_indeces;
 ndofs = length(mus.dof_indeces);
 
+% here we create the jacobians out of the momarms
 alljac = zeros(size(ma.alljnts));
 
-% create jacobian of momarms from OpenSim
 for i = 1:numdata
     alljac(i,dofs(1):dofs(end)) = ma.allmomarms(i,:);
 end
 
 
-
 for i = 1:numdata
+    % get muscle lengths and jacobian of Eul polynomials
     JEulVal = JEul(ma.alljnts(i,:)');
-    LEulVal = LEul(ma.alljnts(i,:)');
-    LEulPol(i,1) = LEulVal(imus);
     JEulPol(i,:) = JEulVal(:,imus)';
 
-    JQuatVal = JQuat(ma.alljntsQ(i,:)');
+    LEulVal = LEul(ma.alljnts(i,:)');
+    LEulPol(i,1) = LEulVal(imus);
+
+    % get muscle lengths from Quat polynomials
     LQuatVal = LQuat(ma.alljntsQ(i,:)');
     LQuatPol(i,1) = LQuatVal(imus);
+
+    % get jacobians from Quat polynomials
+    JQuatVal = JQuat(ma.alljntsQ(i,:)');
     JQuatCur = JQuatVal(:,imus);
 
+    % map from quaternion jacobians to euler jacobians (each joint separately)
     for j = 1:4
         JQuatInSpatCur = invJtrans(ma.alljntsQ(i,(j-1)*4+1:(j-1)*4+4))*JQuatCur((j-1)*3+1:(j-1)*3+3);
         JQuatInJEulCur = GeomJ(ma.alljnts(i,(j-1)*3+1:(j-1)*3+3),alljoints{j})*JQuatInSpatCur;
         JQuatInJEul(i,(j-1)*3+1:(j-1)*3+3) = JQuatInJEulCur';
     end
+
+    % revolute joints are the same
     JQuatInJEul(i,13:14) = JQuatCur(13:14);
 end
 
+% compare calculated length from polynomials with the lengths exported from
+% OpenSim and calculate RMS
 resLEul = ma.alllengths-LEulPol;
 resLQuat = ma.alllengths-LQuatPol;
 RMSLEul = (sqrt(sum(resLEul.^2)/length(resLEul)));
 RMSLQuat = (sqrt(sum(resLQuat.^2)/length(resLQuat)));
 
+% compare Eul jacobians and Quat jacobians (mapped to the Eul space) and
+% calculate RMS
 resJEul = alljac-JEulPol;
 resJQuat = alljac-JQuatInJEul;
 RMSJEul = (sqrt(sum(resJEul.^2,'all')))/(numdata*ndofs); 
 RMSJQuat = (sqrt(sum(resJQuat.^2,'all')))/(numdata*ndofs); 
 
+%save RMS for bar plots
 RMSlen(imus,:) = [RMSLEul,RMSLQuat];
 RMSJac(imus,:) = [RMSJEul,RMSJQuat];
 xbar{imus} = mus.name;
+
 clear LEulPol JEulPol LQuatPol JQuatInJEul resLEul resLQuat RMSLEul RMSLQuat resJEul resJQuat RMSJEul RMSJQuat
  
 end
