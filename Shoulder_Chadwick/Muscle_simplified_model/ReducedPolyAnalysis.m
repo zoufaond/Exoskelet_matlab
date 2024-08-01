@@ -3,22 +3,22 @@ function ReducedPolyAnalysis()
 addpath euler\
 addpath quaternion\
 addpath ..\
-addpath ..\DAS3-simplified\model\newpol_quat\
-modelEul = load("das3_simplified.mat");
-modelQuat = load("das3_simplified_quaternion.mat");
+addpath ..\DAS3-simplified\model\polys_mod_simplified\
+modelEul = load("das3_simplified_eul.mat");
+modelQuat = load("das3_simplified_quat.mat");
 
 % generate jacobians and muscle length (as anonymous functions that depends on q1..qn coordinates)
 genEq = 0;
-[JEul,LEul,EulSize] = muscle_derivation_euler(modelEul.model_simpl,genEq);
-[JQuat,LQuat,QuatSize] = muscle_derivation_quat(modelQuat.model_simpl_quat,genEq);
+[JEul,LEul,EulSize] = muscle_derivation_euler(modelEul.model_simplified_eul,genEq);
+[JQuat,LQuat,QuatSize] = muscle_derivation_quat(modelQuat.model_simplified_quat,genEq);
 
 %%
 % this is used only for muscle names
-muscles = modelEul.model_simpl.muscles;
+muscles = modelEul.model_simplified_eul.muscles;
 
 % iterate over muscles
 for imus = 1:length(muscles)
-musfilename = ['..\DAS3-simplified\model\newpol_quat\path_',muscles{imus}.name,'.mat'];
+musfilename = ['..\DAS3-simplified\model\polys_mod_simplified\path_',muscles{imus}.name,'.mat'];
 ma = load(musfilename);
 
 mus = muscles{imus};

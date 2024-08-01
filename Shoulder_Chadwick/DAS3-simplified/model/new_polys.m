@@ -1,9 +1,9 @@
-addpath('newpol_modifiedModel\')
+addpath('polys_mod_simplified\')
 addpath('build\');
-osimfile = 'das3_clav_scap_orig.osim';
-path = 'newpol_modifiedModel';
-das3_polynomials_quat(osimfile,path,'muscle_file_quat')
+osimfile = 'das3_mod_simplified.osim';
+path = 'polys_mod_simplified';
+das3_polynomials_quat(osimfile,path,'muscle_file_simplified_quat')
 
 %%
-model_full_quat = das3_readosim('das3_clav_scap_orig.osim','muscle_file_quat.mat');
-save('das3_full_quat','model_full_quat')
+model_simplified_quat = das3_readosim('das3_mod_simplified.osim','muscle_file_simplified_quat.mat');
+save('das3_simplified_quat','model_simplified_quat')
