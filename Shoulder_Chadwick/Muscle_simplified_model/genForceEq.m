@@ -4,6 +4,6 @@ addpath ..\
 
 genEq = 1;
 modelEul = load("das3_simplified_eul.mat");
-modelQuat = load("das3_simplified.mat");
-[~,~,~] = muscle_derivation_euler(modelEul.model_simpl,genEq);
-% [~,~,~] = muscle_derivation_quat(modelQuat.model_simpl_quat,genEq);
+modelQuat = load("das3_simplified_quat.mat");
+[~,~,~] = muscle_derivation_euler(modelEul.model_simplified_eul,genEq);
+% [~,~,~] = muscle_derivation_quat(modelQuat.model_simplified_quat,genEq);
