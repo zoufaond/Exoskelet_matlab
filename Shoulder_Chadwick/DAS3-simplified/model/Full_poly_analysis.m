@@ -112,9 +112,9 @@ for imus = 1:length(muscles)
     res = (bpred-b);	% residuals
     resJac = res(ndofs*num_data);
     resLength = res((ndofs+1)*num_data);
-    RMSfull = (sqrt(sum(res.^2)/tot_data));		% RMS of residuals, in mm
-    RMSfullLength = (sqrt(sum(resLength.^2)/length(resLength)));
-    RMSfullJac = (sqrt(sum(resJac.^2)/length(resJac)));
+    RMSfull = (sqrt(sum(res.^2)/tot_data))*1000;
+    RMSfullLength = (sqrt(sum(resLength.^2)/length(resLength)))*1000;
+    RMSfullJac = (sqrt(sum(resJac.^2)/length(resJac)))*1000;
     disp(['RMS fit error of the full model: ',num2str(RMSfull)]);
     disp(['maximum moment arm: ', num2str(maxall)]);
     disp(['Max error in res: ',num2str(max(abs(res)))])
@@ -134,18 +134,18 @@ end
 Sxbar = categorical(string(xbar));
 figure
 bar(Sxbar,RMSbar)
-title('RMSfull')
+title('RMS jacobian + lengths')
 legend('Eul','Quat')
 set(gca, 'YScale', 'log')
 
 figure
 bar(Sxbar,RMSbarLength)
-title('RMSlength')
+title('RMS lengths')
 legend('Eul','Quat')
 set(gca, 'YScale', 'log')
 
 figure
 bar(Sxbar,RMSbarJac)
-title('Jac')
+title('RMS jacobian')
 legend('Eul','Quat')
 set(gca, 'YScale', 'log')

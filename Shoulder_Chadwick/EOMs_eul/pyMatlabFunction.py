@@ -2,6 +2,8 @@ import sympy as sp
 
 def MatlabFunction(function,fun_name,assignto,states,constants,constants_vec):
     
+    # function for creating Matlab function
+    
     text_file = open(f"{fun_name}.m","w")
     with open(f"{fun_name}.m","w") as text_file:
         # function .. = .. ()

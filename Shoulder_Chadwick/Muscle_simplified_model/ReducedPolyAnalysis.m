@@ -66,15 +66,17 @@ end
 % OpenSim and calculate RMS
 resLEul = ma.alllengths-LEulPol;
 resLQuat = ma.alllengths-LQuatPol;
-RMSLEul = (sqrt(sum(resLEul.^2)/length(resLEul)));
-RMSLQuat = (sqrt(sum(resLQuat.^2)/length(resLQuat)));
+RMSLEul = (sqrt(sum(resLEul.^2)/length(resLEul)))*1000;
+RMSLQuat = (sqrt(sum(resLQuat.^2)/length(resLQuat)))*1000;
+
+% disp([ma.alllengths,LEulPol])
 
 % compare Eul jacobians and Quat jacobians (mapped to the Eul space) and
 % calculate RMS
 resJEul = alljac-JEulPol;
 resJQuat = alljac-JQuatInJEul;
-RMSJEul = (sqrt(sum(resJEul.^2,'all')))/(numdata*ndofs); 
-RMSJQuat = (sqrt(sum(resJQuat.^2,'all')))/(numdata*ndofs); 
+RMSJEul = (sqrt(sum(resJEul.^2,'all')))/length(resJEul)*1000; 
+RMSJQuat = (sqrt(sum(resJQuat.^2,'all')))/length(resJQuat)*1000; 
 
 %save RMS for bar plots
 RMSlen(imus,:) = [RMSLEul,RMSLQuat];
@@ -89,13 +91,13 @@ Sxbar = categorical(string(xbar));
 
 figure
 bar(Sxbar,RMSlen)
-title('RMSlength')
+title('RMS length')
 legend('Eul','Quat')
 set(gca, 'YScale', 'log')
 
 figure
 bar(Sxbar,RMSJac)
-title('Jac')
+title('RMS jacobian')
 legend('Eul','Quat')
 set(gca, 'YScale', 'log')
 

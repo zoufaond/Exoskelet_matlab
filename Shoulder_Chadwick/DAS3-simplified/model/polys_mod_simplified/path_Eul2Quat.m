@@ -6,6 +6,9 @@ model = das3_readosim(osimfile);
 mydir = 'polys_mod_simplified';
 muscles = model.muscles;
 
+% this maps the moment arms from Euler space to Quaternion space and adds
+% them to model struct
+
 for currentmuscle = 1:length(muscles)
 imus = currentmuscle;
 % 

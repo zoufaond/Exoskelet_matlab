@@ -1,5 +1,5 @@
 function force = muscle_force(act, lmt, fmax, lceopt, lslack)
-    % thelen 2003 passive and active length properties
+    % thelen 2003 passive and active length properties (contraction velocity ommited for now)
     lm = lmt - lslack;
     f_gauss = 0.25;
     kpe = 5;
