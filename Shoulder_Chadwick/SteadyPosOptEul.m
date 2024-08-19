@@ -2,41 +2,34 @@ clearvars
 addpath EOMs_eul\
 addpath Muscle_simplified_model\euler\
 
-data = load('data_model_python2.mat');
+data = load('data_model.mat');
 opensim_model = load('das3_simplified_eul.mat');
 initCond = data.params.InitPosOptQuat.initCondEul;
-%
+% 
 muscles = opensim_model.model_simplified_eul.muscles;
-fmax_vec = data.params.InitPosOptQuat.fmax;
-lceopt_vec = data.params.InitPosOptQuat.lceopt;
-lslack_vec = data.params.InitPosOptQuat.lslack;
+muscles_compensations = [11/5,11/5,2,2,4,5,4,4,4,11/3,11/3,11/3,4,3,6,3,4,4,11,1,1,4,3,3,3,3,2,5,7,3,1,1,5,3,5,5];
 % 
-% muscles_compensations = [11/5,11/5,2,2,4,5,4,4,4,11/3,11/3,11/3,4,3,6,3,4,4,11,1,1,4,3,3,3,3,2,5,7,3,1,1,5,3,5,5];
-% 
-% for i=1:length(muscles)
-%     fmax_vec(i,1) = muscles{i}.fmax*muscles_compensations(i);
-%     lceopt_vec(i,1) = muscles{i}.lceopt;
-%     lslack_vec(i,1) = muscles{i}.lslack;
-% end
+for i=1:length(muscles)
+    fmax_vec(i,1) = muscles{i}.fmax*muscles_compensations(i);
+    lceopt_vec(i,1) = muscles{i}.lceopt;
+    lslack_vec(i,1) = muscles{i}.lslack;
+end
 %%
 t = 0;
 qn = 10;
 nmus = length(fmax_vec);
 
-
 fun = @(x) sum(mus_forces_simplified_eul(t,[zeros(3,1);x(1:qn,1);0], ...
     zeros(nmus,1),x(qn+1:qn+nmus,1),x(qn+nmus+1:end,1),lslack_vec).^2);
-
-% fun = @(x) sum(moment_equilibrium(t,x(1:qn,1),zeros(nmus,1),x(qn+1:qn+nmus,1),x(qn+nmus+1:end,1),lslack_vec,model).^2);
-    
-x0 = [initCond(1:10);fmax_vec;lceopt_vec]; %;
+  
+x0 = [initCond(1:qn);fmax_vec;lceopt_vec]; %;
 A = [];
 b = [];
 Aeq = [];
 beq = [];
-AC_bndrs = [ones(3,1)*0.01;ones(3,1)*0.01;ones(3,1)*0.01;0.01];
-lb = [initCond(1:10)-AC_bndrs;fmax_vec-fmax_vec*0.3;lceopt_vec-lceopt_vec*0.05];
-ub = [initCond(1:10)+AC_bndrs;fmax_vec+fmax_vec*0.3;lceopt_vec+lceopt_vec*0.05];
+AC_bndrs = [ones(3,1)*0.1;ones(3,1)*0.1;ones(3,1)*0.01;0.05];
+lb = [initCond(1:10)-AC_bndrs;fmax_vec-fmax_vec*0.2;lceopt_vec-lceopt_vec*0.25];
+ub = [initCond(1:10)+AC_bndrs;fmax_vec+fmax_vec*0.2;lceopt_vec+lceopt_vec*0.1];
 nonlcon = @(x) moment_equilibrium(t,x(1:qn,1),zeros(nmus,1),x(qn+1:qn+nmus,1),x(qn+nmus+1:end,1),lslack_vec,data.params.model);
 
 options = optimoptions(@fmincon,'Display','iter','MaxFunEval',1e7,'algorithm','interior-point','MaxIter',10000);%,'MaxFunEval',1e7,'TolFun',1e-9,'MaxIter',1e6,'algorithm','interior-point','TolCon',1e-8,'TolX',1e-12);
@@ -59,7 +52,7 @@ data.params.InitPosOptEul.initCondEul = initCond_optim;
 % save('data_model_mod.mat','model')
 %%
 params = data.params;
-save('data_model_python2.mat','params')
+save('data_model.mat','params')
 %%
 function [c,ceq] = moment_equilibrium(t,q,act,fmax_vec,lceopt_vec,lslack_vec,model)
     x = q(1:10);

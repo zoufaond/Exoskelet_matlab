@@ -1,15 +1,15 @@
 clearvars
 addpath ../
 clc;
-osimfile = '../das3_clav_scap_orig.osim';
+osimfile = '../das3_mod_full.osim';
 model = das3_readosim(osimfile);
-mydir = 'newpol_modifiedModel';
+mydir = 'polys_mod_full';
 muscles = model.muscles;
 
 for currentmuscle = 1:length(muscles)
 imus = currentmuscle;
 % 
-musfilename = ['../newpol_modifiedModel/path_',muscles{imus}.name,'.mat'];
+musfilename = ['path_',muscles{imus}.name,'.mat'];
 ma = load(musfilename);
 
 mus = muscles{imus};
@@ -34,9 +34,15 @@ numdata = size(ma.alljnts,1);
 alljntsQ = [];
 alljntsQA = [];
 
-% change angles seq to quaternions
+% change sequence of euler angles to quaternions
 for i=1:nalljoints
-    quat = eul2quat(ma.alljnts(:,(i-1)*3+1:(i-1)*3+3),alljoints{i});
+    quat = zeros(numdata,4);
+    for j = 1:numdata
+        quat(j,:) = eul2quat(ma.alljnts(j,(i-1)*3+1:(i-1)*3+3),alljoints{i});
+        if quat(j,1) < 0
+            quat(j,:) = quat(j,:)*(-1);
+        end
+    end
     alljntsQ = [alljntsQ quat]; % full quaternions
     alljntsQA = [alljntsQA quat(:,2:4)]; %only 2:4 term of quaternion (input to A matrix)
 end

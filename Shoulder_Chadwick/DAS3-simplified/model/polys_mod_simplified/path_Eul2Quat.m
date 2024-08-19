@@ -12,7 +12,7 @@ muscles = model.muscles;
 for currentmuscle = 1:length(muscles)
 imus = currentmuscle;
 % 
-musfilename = ['../polys_mod_simplified/path_',muscles{imus}.name,'.mat'];
+musfilename = ['path_',muscles{imus}.name,'.mat'];
 ma = load(musfilename);
 
 mus = muscles{imus};

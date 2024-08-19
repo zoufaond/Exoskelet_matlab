@@ -1,9 +1,9 @@
 % function musclepath_poly(muscles,mydir,musclepolyfile)
 clearvars
 clc
-osimfile = 'das3_mod_simplified.osim';
+osimfile = 'das3_mod_full.osim';
 model = das3_readosim(osimfile);
-mydir = 'polys_mod_simplified';
+mydir = 'polys_mod_full';
 muscles = model.muscles;
 
 
