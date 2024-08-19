@@ -45,9 +45,9 @@ if genEq==1
     FG = jac*mus_force';
     f_muscles = [zeros(10,1);FG(4:end-1)];
     %
-    matlabFunction(mus_force,'file','euler/mus_forces_full_ulna_eul','vars',{t,q,act,fmax,lceopt,lslack});
+    matlabFunction(mus_force,'file','euler/mus_forces_full_eul','vars',{t,q,act,fmax,lceopt,lslack});
     % matlabFunction(mus_len,'file','euler/mus_lengths_simp_ulna','vars',{t,q});
-    matlabFunction(f_muscles,'file','euler/TE_muscles_full_ulna_eul','vars',{t,q,act,fmax,lceopt,lslack});
+    matlabFunction(f_muscles,'file','euler/TE_full_eul','vars',{t,q,act,fmax,lceopt,lslack});
 end
 
 end

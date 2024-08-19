@@ -1,5 +1,8 @@
 function ReducedPolyAnalysis()
 
+% this calculates the RMS for lengths and jacobians for quaternion and
+% euler angles
+
 addpath euler\
 addpath quaternion\
 addpath ..\
