@@ -1,10 +1,14 @@
-function data2mot(out,name,type)
+function data2mot(out,name,type, output_from)
 
 
 time = out.tout;
 
-if type == 2
-    angles = out.simdata_Q.signals.values(:,:)';
+if strcmp('quaternion', type)
+    if strcmp('simulink',  output_from)
+        angles = out.simdata_Q.signals.values(:,:)';
+    elseif strcmp('struct', output_from)
+        angles = out.data;
+    end
     SC_Q = angles(:,1:4);
     AC_Q = angles(:,5:8);
     GH_Q = angles(:,9:12);
@@ -21,8 +25,12 @@ if type == 2
 
     angles_OS = [SC_Eul,AC_Eul,GH_Eul,EL_x]*180/pi;
 
-elseif type == 1
-    angles = out.simdata_Eul.signals.values(:,:)';
+elseif strcmp('euler', type)
+    if strcmp('simulink',  output_from)
+        angles = out.simdata_Eul.signals.values(:,:)';
+    elseif strcmp('struct', output_from)
+        angles = out.data;
+    end
     angles_OS = angles(:,1:10)*180/pi;
 end
 

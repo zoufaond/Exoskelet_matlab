@@ -402,8 +402,8 @@ for imus = 1:length(muscles)
     ml_weight = (maxmomdof)/maxall;
     % Stopping criterion: error less than 10% of maximum moment arm (in mm) 
     % for the muscle or 2mm, whichever is greater
-    momarm_error = max(0.1*maxall,2); 
-    %momarm_error = 0.01*maxall; 
+    % momarm_error = max(0.1*maxall,2); 
+    momarm_error = 0.01*maxall; 
 
     for idof = 1:ndofs
         % read moment arm from allmomarms matrix
@@ -479,7 +479,7 @@ for imus = 1:length(muscles)
         % now determine which expanded model had the lowest RMS
         [RMSmin, col] = min(RMSnew);
         % if the change in error is less than 5%, stop without adding this term
-       if ((i>1)&&((RMS - RMSmin)/RMS<0.04))
+       if ((i>1)&&((RMS - RMSmin)/RMS<0.01))
         % if ((i>1)&&((RMS - RMSmin)/RMS<0.05))
             fprintf('Change in error: %3f. No more terms added.\n ',(RMS - RMSmin)/RMS);
             fprintf(logfile,'Change in error: %3f. No more terms added.\n ',(RMS - RMSmin)/RMS);

@@ -1,16 +1,18 @@
 clearvars
 addpath EOMs_eul\
-addpath Muscle_simplified_model\euler\
+addpath Muscle_full_model\euler\
+addpath Functions\
+addpath Motion\
 
+opensim_model = load('das3_full_eul_03.mat');
 data = load('data_model.mat');
-opensim_model = load('das3_simplified_eul.mat');
-initCond = data.params.InitPosOptQuat.initCondEul;
+motion = load('mot_struct.mat');
+initCond = motion.coords_struct.mot_euler(1,:)';
 % 
-muscles = opensim_model.model_simplified_eul.muscles;
-muscles_compensations = [11/5,11/5,2,2,4,5,4,4,4,11/3,11/3,11/3,4,3,6,3,4,4,11,1,1,4,3,3,3,3,2,5,7,3,1,1,5,3,5,5];
+muscles = opensim_model.model_full_eul.muscles;
 % 
 for i=1:length(muscles)
-    fmax_vec(i,1) = muscles{i}.fmax*muscles_compensations(i);
+    fmax_vec(i,1) = muscles{i}.fmax;
     lceopt_vec(i,1) = muscles{i}.lceopt;
     lslack_vec(i,1) = muscles{i}.lslack;
 end
@@ -19,45 +21,51 @@ t = 0;
 qn = 10;
 nmus = length(fmax_vec);
 
-fun = @(x) sum(mus_forces_simplified_eul(t,[zeros(3,1);x(1:qn,1);0], ...
-    zeros(nmus,1),x(qn+1:qn+nmus,1),x(qn+nmus+1:end,1),lslack_vec).^2);
+fun = @(x) sum(mus_forces_eul(t,x(1:qn,1), ...
+    zeros(nmus,1),x(qn+1:qn+nmus,1),x(qn+nmus+1:(end-1),1),lslack_vec).^2);
   
-x0 = [initCond(1:qn);fmax_vec;lceopt_vec]; %;
+x0 = [initCond(1:qn);fmax_vec;lceopt_vec;1]; %;
 A = [];
 b = [];
 Aeq = [];
 beq = [];
-AC_bndrs = [ones(3,1)*0.1;ones(3,1)*0.1;ones(3,1)*0.01;0.05];
-lb = [initCond(1:10)-AC_bndrs;fmax_vec-fmax_vec*0.2;lceopt_vec-lceopt_vec*0.25];
-ub = [initCond(1:10)+AC_bndrs;fmax_vec+fmax_vec*0.2;lceopt_vec+lceopt_vec*0.1];
-nonlcon = @(x) moment_equilibrium(t,x(1:qn,1),zeros(nmus,1),x(qn+1:qn+nmus,1),x(qn+nmus+1:end,1),lslack_vec,data.params.model);
+AC_bndrs = [ones(3,1)*0.005;ones(3,1)*0.005;ones(3,1)*0.005;0.005];
+lb = [initCond(1:10)-AC_bndrs;fmax_vec-fmax_vec*0.1;lceopt_vec-lceopt_vec*0.1;0.5];
+ub = [initCond(1:10)+AC_bndrs;fmax_vec+fmax_vec*0.1;lceopt_vec+lceopt_vec*0.1;1.5];
+nonlcon = @(x) moment_equilibrium(t,x(1:qn,1),zeros(nmus,1),x(qn+1:qn+nmus,1),x(qn+nmus+1:(end-1),1),lslack_vec,data.params.model,x(end));
 
 options = optimoptions(@fmincon,'Display','iter','MaxFunEval',1e7,'algorithm','interior-point','MaxIter',10000);%,'MaxFunEval',1e7,'TolFun',1e-9,'MaxIter',1e6,'algorithm','interior-point','TolCon',1e-8,'TolX',1e-12);
 x_new = fmincon(fun,x0,A,b,Aeq,beq,lb,ub,nonlcon,options);
-%  %%
-% % % options.Algorithm = 'interior-point';
-% options.Algorithm = 'interior-point';
-% options.MaxIterations = 1000;
-% x_new = fmincon(fun,x_new,A,b,Aeq,beq,lb,ub,nonlcon,options);
 %%
 fmax_optim = x_new(11:11+nmus-1);
-lceopt_optim = x_new(11+nmus:end);
+lceopt_optim = x_new(11+nmus:end-1);
 lslack_optim = lslack_vec;
 initCond_optim = [x_new(1:10);zeros(10,1)];
+data.params.model.first_elips_scale = x_new(end);
+data.params.model.second_elips_scale = x_new(end)+0.2;
 data.params.InitPosOptEul.fmax = fmax_optim;
 data.params.InitPosOptEul.lceopt = lceopt_optim;
 data.params.InitPosOptEul.lslack = lslack_optim;
 data.params.InitPosOptEul.initCondEul = initCond_optim;
-
+eul2quatConv = eul2quat_motion(initCond_optim');
+data.params.InitPosOptEul.initCondQuat = [eul2quatConv';zeros(10,1)];
 % save('data_model_mod.mat','model')
+%%
+get_conoid_length(initCond_optim(4:6),data.params.model)
 %%
 params = data.params;
 save('data_model.mat','params')
 %%
-function [c,ceq] = moment_equilibrium(t,q,act,fmax_vec,lceopt_vec,lslack_vec,model)
+eul2quatConv = eul2quat_motion(data.params.InitPosOptEul.initCondEul');
+data.params.InitPosOptEul.initCondQuat = [eul2quatConv';zeros(10,1)];
+params = data.params;
+save('data_model.mat','params')
+
+%%
+function [c,ceq] = moment_equilibrium(t,q,act,fmax_vec,lceopt_vec,lslack_vec,model,first_elips_scale)
     x = q(1:10);
-    FO = fo_EUL(t,x,zeros(10,1),model);
-    FE_muscles = TE_simplified_eul(t,[zeros(3,1);x(1:10);0],act,fmax_vec,lceopt_vec,lslack_vec);
-    ceq = FO+FE_muscles;
+    FO = fo_EUL(t,x,zeros(10,1),act,model,first_elips_scale);
+    FE_muscles = TE_eul(t,x,act,fmax_vec,lceopt_vec,lslack_vec);
+    ceq = FO+[zeros(10,1);FE_muscles];
     c = [];
 end

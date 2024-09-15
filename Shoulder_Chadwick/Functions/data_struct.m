@@ -76,13 +76,21 @@ params.model.contTS = [-0.121876 -0.0228 0.0359];
 params.model.contAI = [-0.116629 -0.140236 0.0359];
 % translation
 params.model.elips_trans = [0 -0.1521 0.0621];
-params.model.elips_dim = [0.1446 0.2117 0.0956]*1.1;%;
+params.model.elips_dim = [0.1446 0.2117 0.0956]*1.3;%;
 % contact force Chadwick
 params.model.k_contact_in = 20000;
 params.model.eps_in = 0.01;
 params.model.k_contact_out = 2000;
 params.model.eps_out = 0.001;
-params.model.second_elips_dim = 1.1;
+params.model.first_elips_scale = 1;
+params.model.second_elips_scale = 1.1;
+
+% conoid_ligamentum
+params.model.conoid_eps = 1e-3;
+params.model.conoid_stiffness = 80000;
+params.model.conoid_length = 0.0174;
+params.model.conoid_origin = [0.1365,0.0206,0.0136];
+params.model.conoid_insertion = [-0.0536,-9.0e-04,-0.0266];
 
 
 %%

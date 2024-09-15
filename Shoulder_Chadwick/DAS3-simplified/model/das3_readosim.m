@@ -293,7 +293,8 @@ model.nMus = MuscleSet.getSize();
 % Probe = Umberger2010MuscleMetabolicsProbe.safeDownCast(Mod.getProbeSet().get('metabolics'));
 
 counter=0;
-
+OS_struct = load('OS_struct')
+wrap_info = OS_struct.struct_os.Model.ForceSet.objects.Schutte1993Muscle_Deprecated;
 % loop through muscles
 for imus = 1:model.nMus
     currentMuscle = MuscleSet.get(imus-1);
@@ -310,6 +311,23 @@ for imus = 1:model.nMus
     model.muscles{imus}.lslack = currentMuscle.getTendonSlackLength();
     model.muscles{imus}.pennopt = currentMuscle.getPennationAngleAtOptimalFiberLength();
     model.muscles{imus}.vmax = currentMuscle.getMaxContractionVelocity();
+
+    isWrapped = isfield(wrap_info(imus).GeometryPath,'PathWrapSet');
+    origin_frame = convertStringsToChars(erase(wrap_info(imus).GeometryPath.PathPointSet.objects.PathPoint(1).socket_parent_frame,"/bodyset/"));
+    insertion_frame = convertStringsToChars(erase(wrap_info(imus).GeometryPath.PathPointSet.objects.PathPoint(2).socket_parent_frame,"/bodyset/"));
+    origin_position = str2num(wrap_info(imus).GeometryPath.PathPointSet.objects.PathPoint(1).location);
+    insertion_position = str2num(wrap_info(imus).GeometryPath.PathPointSet.objects.PathPoint(2).location);
+
+    if strcmp(origin_frame,"thorax") && isWrapped == 0
+        model.muscles{imus}.isWrapped = 0;
+        model.muscles{imus}.origin_frame = origin_frame;
+        model.muscles{imus}.insertion_frame = insertion_frame;
+        model.muscles{imus}.origin_position = origin_position;
+        model.muscles{imus}.insertion_position = insertion_position;
+    else
+        model.muscles{imus}.isWrapped = 1;
+    end
+
     
     act1 = str2double(char(currentMuscle.getPropertyByName('activation1')));
     act2 = str2double(char(currentMuscle.getPropertyByName('activation2')));

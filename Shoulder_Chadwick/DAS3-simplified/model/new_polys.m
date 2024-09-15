@@ -1,11 +1,21 @@
-addpath('polys_mod_full\')
+addpath('polys_mod_full_02\')
 addpath('build\');
-% create struct with polynomials terms for quaternions
+%%
 osimfile = 'das3_mod_full.osim';
-path = 'polys_mod_full';
-das3_polynomials_quat(osimfile,path,'muscle_file_full_quat')
+path = 'polys_mod_full_02';
+das3_polynomials(osimfile,path,'muscle_file_full_eul_02')
 
 %%
-% save the struct with polynomials terms for quaternions
-model_full_quat = das3_readosim('das3_mod_full.osim','muscle_file_full_quat.mat');
-save('das3_full_quat','model_full_quat')
+
+model_full_eul = das3_readosim('das3_mod_full.osim','muscle_file_full_eul_02.mat');
+save('das3_full_eul_03','model_full_eul')
+
+%%
+osimfile = 'das3_mod_full.osim';
+path = 'polys_mod_full_02';
+das3_polynomials_quat(osimfile,path,'muscle_file_full_quat_02')
+
+%%
+
+model_full_quat = das3_readosim('das3_mod_full.osim','muscle_file_full_quat_02.mat');
+save('das3_full_quat_03','model_full_quat')
