@@ -3,7 +3,7 @@ clearvars
 clc
 osimfile = 'das3_mod_full.osim';
 model = das3_readosim(osimfile);
-mydir = 'polys_mod_full';
+mydir = 'polys_from_abd';
 muscles = model.muscles;
 
 

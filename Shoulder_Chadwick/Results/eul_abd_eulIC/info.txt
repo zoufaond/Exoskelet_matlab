@@ -1,0 +1,19 @@
+Number of Iterations....: 92
+
+                                   (scaled)                 (unscaled)
+Objective...............:   6.7230643746941787e+00    6.7230643746941787e+00
+Dual infeasibility......:   6.6268539802434472e-09    6.6268539802434472e-09
+Constraint violation....:   7.4160372963998333e-13    1.3204992654891612e-12
+Variable bound violation:   9.8500955116570407e-09    9.8500955116570407e-09
+Complementarity.........:   1.0000000000000025e-11    1.0000000000000025e-11
+Overall NLP error.......:   6.6268539802434472e-09    6.6268539802434472e-09
+
+
+Number of objective function evaluations             = 114
+Number of objective gradient evaluations             = 93
+Number of equality constraint evaluations            = 114
+Number of inequality constraint evaluations          = 0
+Number of equality constraint Jacobian evaluations   = 93
+Number of inequality constraint Jacobian evaluations = 0
+Number of Lagrangian Hessian evaluations             = 0
+Total seconds in IPOPT                               = 30.166

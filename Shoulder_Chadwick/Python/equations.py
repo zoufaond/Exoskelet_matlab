@@ -60,7 +60,6 @@ def polynomials_euler(model_struct,q,derive,model_params_struct, initCond_name, 
             
         
         elif isWrapped == 1:
-            # print('poly')
             
             name = muscle['name'].item()
             npolterms = muscle['lparam_count'].item()
@@ -123,7 +122,6 @@ def polynomials_euler(model_struct,q,derive,model_params_struct, initCond_name, 
         jacobian_subbed = me.msubs(jacobian,q_subs_dict)
         mus_lengths_subbed = me.msubs(mus_lengths,q_subs_dict)
         mus_forces_subbed = me.msubs(mus_forces,q_subs_dict)
-        print(sp.shape(TE_subbed))
         
         # MatlabFunction(function = TE_conoid_subbed[:-1],
         #                fun_name = 'TE_conoid_eul', assignto = 'TE_conoid',
@@ -301,7 +299,6 @@ def polynomials_quat(model_struct,q,derive,model_params_struct, initCond_name, g
     if gen_matlab_functions == 1:
         qsubs = sp.symbols('qsubs0:13')
         q_subs_dict = dict(zip(q_new[4:],qsubs))
-        print(q_subs_dict)
         segments = []
         # TE_conoid_subbed = me.msubs(TE_conoid,q_subs_dict)
         TE_subbed = me.msubs(TE,q_subs_dict)
@@ -749,7 +746,7 @@ def create_eoms_quat(model_struct,model_params_struct,initCond_name, derive = 's
         k_contact_out = data_struct['k_contact_out'][0,0].item()
         eps_in = data_struct['eps_in'][0,0].item()
         eps_out = data_struct['eps_out'][0,0].item()
-        first_elips_scale = data_struct['first_elips_scale'][0,0].item()
+        first_elips_scale = model_params_struct['params'][initCond_name][0,0]['first_elips_scale'][0,0].item()
         second_elips_scale = data_struct['second_elips_scale'][0,0].item()
 
     # contact points 
@@ -811,52 +808,52 @@ def create_eoms_quat(model_struct,model_params_struct,initCond_name, derive = 's
     FO = KM.forcing_full
     xdot = (KM.q.col_join(KM.u)).diff()
     
-    if gen_matlab_functions == 1:
+#     if gen_matlab_functions == 1:
     
-        body_constants = {'I_': inertia,'mass_':mass,'com_':com,'offset_':offset,'c': c,'g': g}
-        other_constants = {'offset_humerus_rot':list(offset_humerus_rot),'EL_rot_axis': list(EL_rot_axis),
-                            'k_contact_in': k_contact_in,'eps_in': eps_in,'contTS': list(contTS),
-                            'contAI': list(contAI), 'elips_trans':list(elips_trans), 'elips_dim':list(elips_dim),
-                            'k_contact_out': k_contact_out,'eps_out': eps_out,
-                           'second_elips_scale':second_elips_scale, 'offset_thorax': list(offset_thorax)}
+#         body_constants = {'I_': inertia,'mass_':mass,'com_':com,'offset_':offset,'c': c,'g': g}
+#         other_constants = {'offset_humerus_rot':list(offset_humerus_rot),'EL_rot_axis': list(EL_rot_axis),
+#                             'k_contact_in': k_contact_in,'eps_in': eps_in,'contTS': list(contTS),
+#                             'contAI': list(contAI), 'elips_trans':list(elips_trans), 'elips_dim':list(elips_dim),
+#                             'k_contact_out': k_contact_out,'eps_out': eps_out,
+#                            'second_elips_scale':second_elips_scale, 'offset_thorax': list(offset_thorax)}
         
-        usubs = sp.symbols('u1:11')
-        qsubs = sp.symbols('q0:13')
+#         usubs = sp.symbols('u1:11')
+#         qsubs = sp.symbols('q0:13')
 
     # sympy dynamicsymbols has to be substituted with symbols (so it can be printed in octave_code)
 
-        states = [qsubs,usubs]
-        subs_q = {q[i]: qsubs[i] for i in range(len(q))}
-        subs_u = {w[i]: usubs[i] for i in range(len(w))}
-        mm = me.msubs(KM.mass_matrix_full,subs_q,subs_u)
-        fo = me.msubs(KM.forcing_full,subs_q,subs_u)
+        # states = [qsubs,usubs]
+        # subs_q = {q[i]: qsubs[i] for i in range(len(q))}
+        # subs_u = {w[i]: usubs[i] for i in range(len(w))}
+        # mm = me.msubs(KM.mass_matrix_full,subs_q,subs_u)
+        # fo = me.msubs(KM.forcing_full,subs_q,subs_u)
 
-    # this creates Matlab functions
-        MatlabFunction(function = mm,
-                       fun_name = 'mm_quat',assignto = 'mm',
-                       coordinates = qsubs,
-                       speeds = usubs,
-                       inputs = [],
-                       body_constants = body_constants,
-                       segments = segment,
-                       other_constants=other_constants,
-                       muscle_constants = {},
-                       parameters = [first_elips_scale])
-        MatlabFunction(function = fo,
-                       fun_name = 'fo_quat',assignto = 'fo',
-                       coordinates = qsubs,
-                       speeds = usubs,
-                       inputs = [],
-                       body_constants = body_constants,
-                       segments = segment,
-                       other_constants=other_constants,
-                       muscle_constants = {},
-                       parameters = [first_elips_scale])
+#     # this creates Matlab functions
+#         MatlabFunction(function = mm,
+#                        fun_name = 'mm_quat',assignto = 'mm',
+#                        coordinates = qsubs,
+#                        speeds = usubs,
+#                        inputs = [],
+#                        body_constants = body_constants,
+#                        segments = segment,
+#                        other_constants=other_constants,
+#                        muscle_constants = {},
+#                        parameters = [first_elips_scale])
+#         MatlabFunction(function = fo,
+#                        fun_name = 'fo_quat',assignto = 'fo',
+#                        coordinates = qsubs,
+#                        speeds = usubs,
+#                        inputs = [],
+#                        body_constants = body_constants,
+#                        segments = segment,
+#                        other_constants=other_constants,
+#                        muscle_constants = {},
+#                        parameters = [first_elips_scale])
 
-        print('matlab functions generated')
+    print('matlab functions generated')
 
 
-    # return MM,FO,TE,q,w,fr,frstar,kindeq,xdot,constraints,activations
+    return MM,FO,TE,q,w,fr,frstar,kindeq,xdot,constraints,activations
 
 
 
@@ -1075,7 +1072,7 @@ def create_eoms_eul(model_struct,model_params_struct,initCond_name, derive = 'sy
         k_contact_out = data_struct['k_contact_out'][0,0].item()
         eps_in = data_struct['eps_in'][0,0].item()
         eps_out = data_struct['eps_out'][0,0].item()
-        first_elips_scale = data_struct['second_elips_scale'][0,0].item()
+        first_elips_scale = model_params_struct['params'][initCond_name][0,0]['first_elips_scale'][0,0].item()
         second_elips_scale = data_struct['second_elips_scale'][0,0].item()
 
     # contact points 
@@ -1132,47 +1129,47 @@ def create_eoms_eul(model_struct,model_params_struct,initCond_name, derive = 'sy
     xdot = (KM.q.col_join(KM.u)).diff()
     print('equations created')
     
-    if gen_matlab_functions == 1:
+#     if gen_matlab_functions == 1:
     
-        body_constants = {'I_': inertia,'mass_':mass,'com_':com,'offset_':offset,'c': c,'g': g}
-        other_constants = {'offset_humerus_rot':list(offset_humerus_rot),'EL_rot_axis': list(EL_rot_axis),
-                            'k_contact_in': k_contact_in,'eps_in': eps_in,'contTS': list(contTS),
-                            'contAI': list(contAI), 'elips_trans':list(elips_trans), 'elips_dim':list(elips_dim),
-                            'k_contact_out': k_contact_out,'eps_out': eps_out,'second_elips_scale':second_elips_scale, 'offset_thorax': list(offset_thorax)}
-        usubs = sp.symbols('u1:11')
-        qsubs = sp.symbols('q1:11')
+#         body_constants = {'I_': inertia,'mass_':mass,'com_':com,'offset_':offset,'c': c,'g': g}
+#         other_constants = {'offset_humerus_rot':list(offset_humerus_rot),'EL_rot_axis': list(EL_rot_axis),
+#                             'k_contact_in': k_contact_in,'eps_in': eps_in,'contTS': list(contTS),
+#                             'contAI': list(contAI), 'elips_trans':list(elips_trans), 'elips_dim':list(elips_dim),
+#                             'k_contact_out': k_contact_out,'eps_out': eps_out,'second_elips_scale':second_elips_scale, 'offset_thorax': list(offset_thorax)}
+#         usubs = sp.symbols('u1:11')
+#         qsubs = sp.symbols('q1:11')
 
     # sympy dynamicsymbols has to be substituted with symbols (so it can be printed in octave_code)
 
-        subs_q = {q[i]: qsubs[i] for i in range(len(q))}
-        subs_u = {u[i]: usubs[i] for i in range(len(u))}
-        mm = me.msubs(KM.mass_matrix_full,subs_q,subs_u)
-        fo = me.msubs(KM.forcing_full,subs_q,subs_u)
+#         subs_q = {q[i]: qsubs[i] for i in range(len(q))}
+#         subs_u = {u[i]: usubs[i] for i in range(len(u))}
+#         mm = me.msubs(KM.mass_matrix_full,subs_q,subs_u)
+#         fo = me.msubs(KM.forcing_full,subs_q,subs_u)
 
-        MatlabFunction(function = mm,
-                       fun_name = 'mm_eul',assignto = 'mm',
-                       coordinates = qsubs,
-                       speeds = usubs,
-                       inputs = [],
-                       body_constants = body_constants,
-                       segments = segment,
-                       other_constants=other_constants,
-                       muscle_constants = {},
-                       parameters = [first_elips_scale])
-        MatlabFunction(function = fo,
-                       fun_name = 'fo_eul',assignto = 'fo',
-                       coordinates = qsubs,
-                       speeds = usubs,
-                       inputs = [],
-                       body_constants = body_constants,
-                       segments = segment,
-                       other_constants=other_constants,
-                       muscle_constants = {},
-                       parameters = [first_elips_scale])
+#         MatlabFunction(function = mm,
+#                        fun_name = 'mm_eul',assignto = 'mm',
+#                        coordinates = qsubs,
+#                        speeds = usubs,
+#                        inputs = [],
+#                        body_constants = body_constants,
+#                        segments = segment,
+#                        other_constants=other_constants,
+#                        muscle_constants = {},
+#                        parameters = [first_elips_scale])
+#         MatlabFunction(function = fo,
+#                        fun_name = 'fo_eul',assignto = 'fo',
+#                        coordinates = qsubs,
+#                        speeds = usubs,
+#                        inputs = [],
+#                        body_constants = body_constants,
+#                        segments = segment,
+#                        other_constants=other_constants,
+#                        muscle_constants = {},
+#                        parameters = [first_elips_scale])
 
-        print('matlab functions generated')
+    # print('matlab functions generated')
 
-    # return MM,FO,TE,TE_conoid,q,u,fr,frstar,kindeq,xdot,activations
+    return MM,FO,TE,TE_conoid,q,u,fr,frstar,kindeq,xdot,activations
 
 
 

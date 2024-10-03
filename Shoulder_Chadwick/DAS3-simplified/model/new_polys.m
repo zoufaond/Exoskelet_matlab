@@ -1,21 +1,21 @@
-addpath('polys_mod_full_02\')
+addpath('polys_from_abd\')
 addpath('build\');
 %%
 osimfile = 'das3_mod_full.osim';
-path = 'polys_mod_full_02';
-das3_polynomials(osimfile,path,'muscle_file_full_eul_02')
+path = 'polys_from_abd';
+das3_polynomials_eul(osimfile,path,'muscle_file_eul')
 
 %%
 
-model_full_eul = das3_readosim('das3_mod_full.osim','muscle_file_full_eul_02.mat');
-save('das3_full_eul_03','model_full_eul')
+model_full_eul = das3_readosim('das3_mod_full.osim','muscle_file_eul.mat');
+save('das3_eul_abd','model_full_eul')
 
 %%
 osimfile = 'das3_mod_full.osim';
-path = 'polys_mod_full_02';
-das3_polynomials_quat(osimfile,path,'muscle_file_full_quat_02')
+path = 'polys_from_abd';
+das3_polynomials_quat(osimfile,path,'muscle_file_quat')
 
 %%
 
-model_full_quat = das3_readosim('das3_mod_full.osim','muscle_file_full_quat_02.mat');
-save('das3_full_quat_03','model_full_quat')
+model_full_quat = das3_readosim('das3_mod_full.osim','muscle_file_quat.mat');
+save('das3_quat_abd','model_full_quat')

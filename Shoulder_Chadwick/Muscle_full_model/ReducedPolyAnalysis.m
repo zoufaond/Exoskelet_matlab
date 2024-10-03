@@ -7,8 +7,8 @@ addpath euler\
 addpath quaternion\
 addpath ..\
 addpath ..\DAS3-simplified\model\polys_mod_full\
-modelEul = load("das3_full_eul.mat");
-modelQuat = load("das3_full_quat.mat");
+modelEul = load("das3_eul.mat");
+modelQuat = load("das3_quat.mat");
 
 % generate jacobians and muscle length (as anonymous functions that depends on q1..qn coordinates)
 genEq = 0;
