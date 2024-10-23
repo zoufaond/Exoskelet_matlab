@@ -1397,7 +1397,7 @@ def MatlabFunction(function,fun_name,assignto,coordinates,speeds,inputs,body_con
 ###################################################################################################
 
 
-def create_eoms_u0state(model_struct,model_params_struct,initCond_name, derive = 'symbolic'):
+def create_eoms_u0state(model_struct,model_params_struct,initCond_name, derive = 'symbolic',gen_matlab_functions = None):
     # symbols
     t = sp.symbols('t')
 
@@ -1608,13 +1608,14 @@ def create_eoms_u0state(model_struct,model_params_struct,initCond_name, derive =
         elips_dim = sp.symbols('elips_dim_1:4')
         k_contact_in, eps_in = sp.symbols('k_contact_in eps_in')
         k_contact_out, eps_out = sp.symbols('k_contact_out eps_out')
-        second_elips_dim = sp.Symbol('second_elips_dim')
+        first_elips_scale = sp.Symbol('first_elips_scale')
+        second_elips_scale = sp.Symbol('second_elips_scale')
     elif derive == 'numeric':
         contTS = []
         contAI = []
         elips_trans = []
         elips_dim = []
-
+        
         for i in range(3):
             contTS.append(data_struct['contTS'][0,0][0,i].item())
             contAI.append(data_struct['contAI'][0,0][0,i].item())
@@ -1624,7 +1625,8 @@ def create_eoms_u0state(model_struct,model_params_struct,initCond_name, derive =
         k_contact_out = data_struct['k_contact_out'][0,0].item()
         eps_in = data_struct['eps_in'][0,0].item()
         eps_out = data_struct['eps_out'][0,0].item()
-        second_elips_dim = data_struct['second_elips_dim'][0,0].item()
+        first_elips_scale = model_params_struct['params'][initCond_name][0,0]['first_elips_scale'][0,0].item()
+        second_elips_scale = data_struct['second_elips_scale'][0,0].item()
 
     # contact points 
     contact_point1 = me.Point('CP1')
@@ -1648,16 +1650,16 @@ def create_eoms_u0state(model_struct,model_params_struct,initCond_name, derive =
     z_pos2 = contact_point2.pos_from(point_ground).dot(frame_ground.z)
 
     # Contact forces
-    f1_in = ((x_pos1-elips_trans[0])/elips_dim[0])**2+((y_pos1-elips_trans[1])/elips_dim[1])**2+((z_pos1-elips_trans[2])/elips_dim[2])**2-1
-    f1_out = ((x_pos1-elips_trans[0])/(second_elips_dim*elips_dim[0]))**2+((y_pos1-elips_trans[1])/(second_elips_dim*elips_dim[1]))**2+((z_pos1-elips_trans[2])/(second_elips_dim*elips_dim[2]))**2-1
+    f1_in = ((x_pos1-elips_trans[0])/(first_elips_scale*elips_dim[0]))**2+((y_pos1-elips_trans[1])/(first_elips_scale*elips_dim[1]))**2+((z_pos1-elips_trans[2])/(first_elips_scale*elips_dim[2]))**2-1
+    f1_out = ((x_pos1-elips_trans[0])/(second_elips_scale*elips_dim[0]))**2+((y_pos1-elips_trans[1])/(second_elips_scale*elips_dim[1]))**2+((z_pos1-elips_trans[2])/(second_elips_scale*elips_dim[2]))**2-1
     F1_in = 1/2*(f1_in-sp.sqrt(f1_in**2+eps_in**2))
     F1_out = 1/2*(f1_out+sp.sqrt(f1_out**2+eps_out**2))
     Fx1 = -(k_contact_in*F1_in+k_contact_out*F1_out)*(x_pos1-elips_trans[0])*(elips_dim[0]**2+elips_dim[1]**2+elips_dim[2]**2)/(elips_dim[0]**2)
     Fy1 = -(k_contact_in*F1_in+k_contact_out*F1_out)*(y_pos1-elips_trans[1])*(elips_dim[0]**2+elips_dim[1]**2+elips_dim[2]**2)/(elips_dim[1]**2)
     Fz1 = -(k_contact_in*F1_in+k_contact_out*F1_out)*(z_pos1-elips_trans[2])*(elips_dim[0]**2+elips_dim[1]**2+elips_dim[2]**2)/(elips_dim[2]**2)
 
-    f2_in = ((x_pos2-elips_trans[0])/elips_dim[0])**2+((y_pos2-elips_trans[1])/elips_dim[1])**2+((z_pos2-elips_trans[2])/elips_dim[2])**2-1
-    f2_out = ((x_pos2-elips_trans[0])/(second_elips_dim*elips_dim[0]))**2+((y_pos2-elips_trans[1])/(second_elips_dim*elips_dim[1]))**2+((z_pos2-elips_trans[2])/(second_elips_dim*elips_dim[2]))**2-1
+    f2_in = ((x_pos2-elips_trans[0])/(first_elips_scale*elips_dim[0]))**2+((y_pos2-elips_trans[1])/(first_elips_scale*elips_dim[1]))**2+((z_pos2-elips_trans[2])/(first_elips_scale*elips_dim[2]))**2-1
+    f2_out = ((x_pos2-elips_trans[0])/(second_elips_scale*elips_dim[0]))**2+((y_pos2-elips_trans[1])/(second_elips_scale*elips_dim[1]))**2+((z_pos2-elips_trans[2])/(second_elips_scale*elips_dim[2]))**2-1
     F2_in = 1/2*(f2_in-sp.sqrt(f2_in**2+eps_in**2))
     F2_out = 1/2*(f2_out+sp.sqrt(f2_out**2+eps_out**2))
     Fx2 = -(k_contact_in*F2_in+k_contact_out*F2_out)*(x_pos2-elips_trans[0])*(elips_dim[0]**2+elips_dim[1]**2+elips_dim[2]**2)/(elips_dim[0]**2)
@@ -1669,7 +1671,7 @@ def create_eoms_u0state(model_struct,model_params_struct,initCond_name, derive =
     cont_force2 = [(contact_point2,frame_ground.x*Fx2+frame_ground.y*Fy2+frame_ground.z*Fz2)]
     CONT = cont_force1+cont_force2
 
-    TE,activations = polynomials(model_struct,q,derive,model_params_struct,initCond_name)
+    TE,activations = polynomials_quat(model_struct,q,derive,model_params_struct,initCond_name,gen_matlab_functions)
 
     q_dep = [q[0],q[4],q[8]]
     q_ind = q[1:4]+q[5:8]+q[9:]
