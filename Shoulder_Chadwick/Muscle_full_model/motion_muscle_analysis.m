@@ -12,7 +12,7 @@ modelQuat = load("das3_quat.mat");
 %%
 % 'raw_IK/' or 'clavmod_IK/'
 folder = 'clavmod_IK/';
-muscle_group ='subscap';
+muscle_group ='delt_scap';
 motion = 'abd';
 
 lengths_tbl = readtable(['motion_analysis/',folder,'all_lengths.txt']);
@@ -37,7 +37,7 @@ time = motion_file.coords_struct.tout;
 indexes = find_mus_index(modelEul,muscle_names);
 
 % 
-for imus = 1:length(muscle_names)
+for imus = 10:10 %length(muscle_names)
     for i = 1:numdata
         LEul_current = mus_lengths_eul_abd(0,motion_euler(i,:)');
         iLEul(:,i) = LEul_current(indexes(imus));
@@ -63,29 +63,31 @@ for imus = 1:length(muscle_names)
     RMS_length_eul = sqrt((sum((iLEul.' - lengths_vals(:,imus)).^2))/numdata) * 1000;
     figure
     
-    tiledlayout(5,3);
+    tiledlayout(2,3);
     nexttile([1,3])
-    plot(time,iLEul,time,iLQuat,time,lengths_vals(:,imus),'LineWidth',1)
-    title('Muscle length',['RMS quat = ',num2str(RMS_length_quat,'%.3f'),'mm',', RMS eul = ', num2str(RMS_length_eul,'%.3f'),'mm'], 'Interpreter', 'none')
+    plot(time,iLEul,'g--',time,iLQuat,'r--',time,lengths_vals(:,imus),'b','LineWidth',1)
+    title('Muscle length',['Quaternion RMS = ',num2str(RMS_length_quat,'%.3f'),'mm',', Euler RMS = ', num2str(RMS_length_eul,'%.3f'),'mm'], 'Interpreter', 'none')
 
-    for iplot = 1:length(dofs_names)
+    for iplot = 7:9 %length(dofs_names)
         momarmsvals = momarms.dof{iplot};
         momarmsvals = momarmsvals{:,mask};
         RMS_momarm_eul = sqrt((sum((iJEul(iplot,:).' - momarmsvals(:,imus)).^2))/numdata) * 1000;
         RMS_momarm_quat = sqrt((sum((JQuatInJEul(iplot,:).' - momarmsvals(:,imus)).^2))/numdata) * 1000;
         nexttile
-        plot(time,iJEul(iplot,:),time,JQuatInJEul(iplot,:),time,momarmsvals(:,imus),'LineWidth',1) %
-        title(dofs_names(iplot),['RMS quat = ',num2str(RMS_momarm_quat,'%.3f'),'mm',', RMS eul = ', num2str(RMS_momarm_eul,'%.3f'),'mm'], 'Interpreter', 'none')
+        plot(time,iJEul(iplot,:)*1000,'g--',time,JQuatInJEul(iplot,:)*1000,'r--',time,momarmsvals(:,imus)*1000,'b','LineWidth',1.5) %
+        title(string(dofs_names(iplot)) + ' moment arm',{['Quaternion RMS = ',num2str(RMS_momarm_quat,'%.3f'),'mm'],['Euler RMS = ', num2str(RMS_momarm_eul,'%.3f'),'mm']}, 'Interpreter', 'none')
+        ylabel('Moment arm [mm]')
+        axis([-inf inf -30 30])
     end
-    sgtitle(muscle_names(imus), 'Interpreter', 'none')
+    % sgtitle(muscle_names(imus), 'Interpreter', 'none')
     fig = gcf;
     fig.Position(3) = fig.Position(3) + 250;
-    Lgnd = legend('eul','quat','IK');
-    Lgnd.Position(1) = 0.01;
-    Lgnd.Position(2) = 0.5;
+    Lgnd = legend('Euler','Quaternion','OpenSim');
+    Lgnd.Position(1) = 0.8;
+    Lgnd.Position(2) = 0.8;
 
 end
-
+exportgraphics(fig,'approximation_elevation.png','Resolution',600);
 
 function index = find_mus_index(model,mus_names)
     muscles = model.model_full_eul.muscles;

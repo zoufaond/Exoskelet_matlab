@@ -1,5 +1,6 @@
 % function musclepath_poly(muscles,mydir,musclepolyfile)
 clearvars
+clear all
 clc
 osimfile = 'das3_mod_full.osim';
 model = das3_readosim(osimfile);
@@ -130,22 +131,35 @@ for imus = 1:length(muscles)
     end
 end
 
-%
+%%
 Sxbar = categorical(string(xbar));
+start_ind = 20;
+end_ind = 60;
+space = 4;
+Sxbar = Sxbar(start_ind:space:end_ind);
+Sxbar = removecats(Sxbar);
+% Sxbar = removecats(Sxbar);
+% figure
+% bar(Sxbar,RMSbar)
+% title('RMS jacobian + lengths')
+% legend('Eul','Quat')
+% set(gca, 'YScale', 'log')
 figure
-bar(Sxbar,RMSbar)
-title('RMS jacobian + lengths')
-legend('Eul','Quat')
+tiledlayout(1,2)
+fig = gcf;
+nexttile
+bar(Sxbar,RMSbarLength(start_ind:space:end_ind,:))
+title({'RMS of lengths approximations','w.r.t OpenSim values'})
+legend('Eul','Quat','Location','northwest')
+ylabel('RMS in log scale [mm]','FontWeight','bold')
 set(gca, 'YScale', 'log')
 
-figure
-bar(Sxbar,RMSbarLength)
-title('RMS lengths')
-legend('Eul','Quat')
+nexttile
+bar(Sxbar,RMSbarJac(start_ind:space:end_ind,:))
+title({'RMS of Jacobians approximations','w.r.t OpenSim values'})
+legend('Eul','Quat','Location','northwest')
+ylabel('RMS in log scale [mm]','FontWeight','bold')
 set(gca, 'YScale', 'log')
 
-figure
-bar(Sxbar,RMSbarJac)
-title('RMS jacobian')
-legend('Eul','Quat')
-set(gca, 'YScale', 'log')
+sppi = get(fig,"ScreenPixelsPerInch");
+exportgraphics(fig,'full_RMS.png','Resolution',1000);
