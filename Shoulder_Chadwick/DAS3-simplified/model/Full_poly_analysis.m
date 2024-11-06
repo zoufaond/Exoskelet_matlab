@@ -23,9 +23,11 @@ for imus = 1:length(muscles)
     if EULorQ == 1
         jnts = ma.alljnts;
         jacobs = ma.allmomarms;
+        current_poly = 'Euler';
     elseif EULorQ == 2
         jnts = ma.alljntsQA;
         jacobs = ma.quat_J;
+        current_poly = 'Quaternion';
     end
 
     num_data = size(ma.alljnts,1);
@@ -59,7 +61,7 @@ for imus = 1:length(muscles)
     % Stopping criterion: error less than 10% of maximum moment arm (in mm) 
     % for the muscle or 2mm, whichever is greater
     momarm_error = max(0.1*maxall,2); 
-    momarm_error = 0.01*maxall; 
+    % momarm_error = 0.01*maxall; 
     %
     for idof = 1:ndofs
         % read moment arm from allmomarms matrix
@@ -122,11 +124,21 @@ for imus = 1:length(muscles)
     disp(['Sum error of J:' num2str(sum(abs(res(1:ndofs*num_data))))])
     disp(['Sum error of length: ', num2str(sum(abs(res(ndofs*num_data+1:(ndofs+1)*num_data))))])
     disp('---------------------------')
-    
+
+    mus_model{imus}.name = mus.name;
+    mus_model{imus}.num_lparams = npar;
+    mus_model{imus}.lparams = polylist; % size of lparams: num_lparams x num_dofs
+    mus_model{imus}.lcoef = p;
+    npar
     RMSbar(imus,EULorQ) = RMSfull;
     RMSbarLength(imus,EULorQ) = RMSfullLength;
     RMSbarJac(imus,EULorQ) = RMSfullJac;
     xbar{imus} = mus.name;
+    
+    % if ~mod(imus,1)
+    % examine_momarms(mus_model{imus}, mus.dof_names, jacobs, ang);	
+    % end
+
     clear ma A b ang res resJac resLength;
     end
 end
@@ -163,3 +175,54 @@ set(gca, 'YScale', 'log')
 
 sppi = get(fig,"ScreenPixelsPerInch");
 exportgraphics(fig,'full_RMS.png','Resolution',1000);
+
+
+
+function examine_momarms(musmodel, dof_names, moment_arms, sangles)
+% plot momentarm-angle data
+
+% choose a subset of "angles" that contains only 100 points
+% a = 1;
+% b = size(angles,1);
+% r = a + (b-a).*rand(100,1);
+% indeces = ceil(sort(r));
+% sangles = angles(indeces,:);
+
+% ...or use all angles
+%indeces = 1:size(angles,1);
+%sangles = angles;
+
+% calculate moment arms from polynomial
+pmoment_arms = zeros(length(sangles(:,1)),length(dof_names));
+for iframe = 1:length(sangles(:,1))
+    for i=1:musmodel.num_lparams
+
+        % add this term's contribution to the muscle length 
+        term = musmodel.lcoef(i);
+
+        for j=1:length(dof_names)
+            for k=1:musmodel.lparams(i,j)
+                term = term * sangles(iframe,j); % this creates lcoeff(i) * product of all angles to the power lparams(i,j) 
+            end
+        end
+
+        % first derivatives of length with respect to all q's
+        for  k=1:length(dof_names)
+            % derivative with respect to q_k is zero unless exponent is 1 or higher and q is not zero
+            if ((musmodel.lparams(i,k) > 0) && (sangles(iframe,k)))	
+                dterm = musmodel.lparams(i,k)*term/sangles(iframe,k);
+                pmoment_arms(iframe,k) = pmoment_arms(iframe,k) + dterm;
+            end
+        end
+    end
+end
+
+figure;
+for idof=1:length(dof_names)
+    subplot(length(dof_names),1,idof);
+    plot(moment_arms(:,idof),'bx-'); hold on; plot(-pmoment_arms(:,idof),'ro-'); 	
+    title([dof_names{idof}, ' momentarms for ',musmodel.name],'Interpreter', 'none'); 
+end
+legend('osim','poly');
+
+end
