@@ -30,7 +30,7 @@ def exp_trajectory_eul(mot_struct_name,num_nodes):
     duration = time[-1]
     time_new = np.linspace(0,duration,num_nodes)
     
-    eul_coords = mot_struct['coords_struct']['mot_euler_mod'][0,0]
+    eul_coords = mot_struct['coords_struct']['mot_euler_mod'][0,0] #mot_euler_mod
     num_coords = np.shape(eul_coords)[1]
     eul_new = np.zeros([num_nodes,num_coords])
     interval_value = duration/(num_nodes - 1)
