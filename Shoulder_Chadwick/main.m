@@ -1,16 +1,18 @@
 clearvars
 
 addpath Geometry\
-addpath EOMs_quat\
-addpath EOMs_eul\
+% addpath EOMs_quat\
+% addpath EOMs_eul\
+addpath equations_of_motion\quaternion\
+addpath equations_of_motion\euler\
 addpath Muscle_full_model\euler\
 addpath Muscle_full_model\quaternion\
 addpath Functions\
 addpath Motion\
 
 data = load('data_model.mat');
-opensim_model = load('das3_full_quat.mat');
-motion = load('mot_struct.mat');
+opensim_model = load('das3_quat.mat');
+% motion = load('mot_struct.mat');
 model = data.params.model;
 params = data.params;
 

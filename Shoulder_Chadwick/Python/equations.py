@@ -178,7 +178,7 @@ def polynomials_euler(model_struct,q,derive,model_params_struct, initCond_name, 
     return TE_act_subbed, act, TE_conoid[:-1]
 
 
-def polynomials_quat(model_struct,q,derive,model_params_struct, initCond_name, gen_matlab_functions = None):
+def polynomials_quat(model_struct,q,derive,model_params_struct, initCond_name, folder = None, gen_matlab_functions = None):
     
     q_thorax0 = me.dynamicsymbols('q_thorax0')
     q_thorax1 = me.dynamicsymbols('q_thorax1')
@@ -326,37 +326,38 @@ def polynomials_quat(model_struct,q,derive,model_params_struct, initCond_name, g
                        segments = [],
                        other_constants={},
                        muscle_constants = muscle_constants,
-                       parameters = [])
-        MatlabFunction(function = mus_forces_subbed,
-                       fun_name = 'mus_forces_quat', assignto = 'mus_forces',
-                       coordinates = qsubs,
-                       speeds = [],
-                       inputs = actSym,
-                       body_constants = {},
-                       segments = [],
-                       other_constants={},
-                       muscle_constants = muscle_constants,
-                       parameters = [])
-        MatlabFunction(function = JacInSpat_subbed,
-                       fun_name = 'JacInSpat_quat',assignto = 'JacInSpat',
-                       coordinates = qsubs,
-                       speeds = [],
-                       inputs = [],
-                       body_constants = {},
-                       segments = [],
-                       other_constants={},
-                       muscle_constants = {},
-                       parameters = [])
-        MatlabFunction(function = mus_lengths_subbed,
-                       fun_name = 'mus_lengths_quat',assignto = 'mus_lengths',
-                       coordinates = qsubs,
-                       speeds = [],
-                       inputs = [],
-                       body_constants = {},
-                       segments = [],
-                       other_constants={},
-                       muscle_constants = {},
-                       parameters = [])
+                       parameters = [],
+                       folder = folder)
+        # MatlabFunction(function = mus_forces_subbed,
+        #                fun_name = 'mus_forces_quat', assignto = 'mus_forces',
+        #                coordinates = qsubs,
+        #                speeds = [],
+        #                inputs = actSym,
+        #                body_constants = {},
+        #                segments = [],
+        #                other_constants={},
+        #                muscle_constants = muscle_constants,
+        #                parameters = [])
+        # MatlabFunction(function = JacInSpat_subbed,
+        #                fun_name = 'JacInSpat_quat',assignto = 'JacInSpat',
+        #                coordinates = qsubs,
+        #                speeds = [],
+        #                inputs = [],
+        #                body_constants = {},
+        #                segments = [],
+        #                other_constants={},
+        #                muscle_constants = {},
+        #                parameters = [])
+        # MatlabFunction(function = mus_lengths_subbed,
+        #                fun_name = 'mus_lengths_quat',assignto = 'mus_lengths',
+        #                coordinates = qsubs,
+        #                speeds = [],
+        #                inputs = [],
+        #                body_constants = {},
+        #                segments = [],
+        #                other_constants={},
+        #                muscle_constants = {},
+        #                parameters = [])
     
     return TE_subs, act
 
@@ -510,7 +511,7 @@ def create_eoms_quat(model_struct,model_params_struct,initCond_name, derive = 's
 
     states = ['q','w']
     segment = ['clavicula','scapula','humerus','ulna','radius','hand']
-    joints = ['quat','quat','quat','rotaxis','weld','weld']
+    joints = ['quat','quat','quat','rotaxis','rotaxis','weld']
     inertia = []
     mass = []
     com = []
@@ -698,15 +699,29 @@ def create_eoms_quat(model_struct,model_params_struct,initCond_name, derive = 's
     point_offset[3].v2pt_theory(point_offset[2],frame_ground,frame[3]);
 
     # radius and PSY joint (weld joint for now)
-    frame[4].orient_axis(frame[3],frame[3].z,0)
-    frame[4].set_ang_vel(frame[3],0)
+    frame[4].orient_axis(frame[3],frame[3].x*PSY_rot_axis[0]
+                         +frame[3].y*PSY_rot_axis[1]+frame[3].z*PSY_rot_axis[2],
+                         q[13])
     masscenter[4].set_pos(point_offset[3],com[0+4*3]*frame[4].x + com[1+4*3]*frame[4].y + com[2+4*3]*frame[4].z)
     masscenter[4].v2pt_theory(point_offset[3],frame_ground,frame[4])
     FG.append((masscenter[4], -mass[4] * g * frame_ground.y))
-    frame[4].ang_vel_in(frame[3])
+    # DAMP.append(((frame[4]),-c*u[10]*(ulna_rot_frame.x*EL_rot_axis[0]+ulna_rot_frame.y*EL_rot_axis[1]
+    #                         +ulna_rot_frame.z*EL_rot_axis[2])))
+    # DAMP.append((ulna_rot_frame,c*u[9]*(ulna_rot_frame.x*EL_rot_axis[0]+ulna_rot_frame.y*EL_rot_axis[1]
+    #                             +ulna_rot_frame.z*EL_rot_axis[2])))
+    kindeq.append(w[10]-q[13].diff(t))
 
-    point_offset[4].set_pos(point_offset[3],offset[0+4*3]*frame[3].x + offset[1+4*3]*frame[3].y + offset[2+4*3]*frame[3].z)
-    point_offset[4].v2pt_theory(point_offset[3],frame_ground,frame[3])
+    point_offset[4].set_pos(point_offset[3],offset[0+4*3]*frame[4].x + offset[1+4*3]*frame[4].y + offset[2+4*3]*frame[4].z)
+    point_offset[4].v2pt_theory(point_offset[3],frame_ground,frame[4])
+    # frame[4].orient_axis(frame[3],frame[3].z,0)
+    # frame[4].set_ang_vel(frame[3],0)
+    # masscenter[4].set_pos(point_offset[3],com[0+4*3]*frame[4].x + com[1+4*3]*frame[4].y + com[2+4*3]*frame[4].z)
+    # masscenter[4].v2pt_theory(point_offset[3],frame_ground,frame[4])
+    # FG.append((masscenter[4], -mass[4] * g * frame_ground.y))
+    # frame[4].ang_vel_in(frame[3])
+
+    # point_offset[4].set_pos(point_offset[3],offset[0+4*3]*frame[3].x + offset[1+4*3]*frame[3].y + offset[2+4*3]*frame[3].z)
+    # point_offset[4].v2pt_theory(point_offset[3],frame_ground,frame[3])
 
     # hand
     frame[5].orient_axis(frame[4],frame[4].z,0)
@@ -793,9 +808,9 @@ def create_eoms_quat(model_struct,model_params_struct,initCond_name, derive = 's
     cont_force2 = [(contact_point2,frame_ground.x*Fx2+frame_ground.y*Fy2+frame_ground.z*Fz2)]
     CONT = cont_force1+cont_force2
 
-    TE,activations = polynomials_quat(model_struct,q,derive,model_params_struct,initCond_name, gen_matlab_functions)
+    # TE,activations = polynomials_quat(model_struct,q,derive,model_params_struct,initCond_name,'quaternion', gen_matlab_functions)
     
-    print('TE created')
+    # print('TE created')
     
     Torques = me.dynamicsymbols('Torques1:13')
     torque = []
@@ -809,47 +824,49 @@ def create_eoms_quat(model_struct,model_params_struct,initCond_name, derive = 's
     FO = KM.forcing_full
     xdot = (KM.q.col_join(KM.u)).diff()
     
-#     if gen_matlab_functions == 1:
+    if gen_matlab_functions == 1:
     
-#         body_constants = {'I_': inertia,'mass_':mass,'com_':com,'offset_':offset,'c': c,'g': g}
-#         other_constants = {'offset_humerus_rot':list(offset_humerus_rot),'EL_rot_axis': list(EL_rot_axis),
-#                             'k_contact_in': k_contact_in,'eps_in': eps_in,'contTS': list(contTS),
-#                             'contAI': list(contAI), 'elips_trans':list(elips_trans), 'elips_dim':list(elips_dim),
-#                             'k_contact_out': k_contact_out,'eps_out': eps_out,
-#                            'second_elips_scale':second_elips_scale, 'offset_thorax': list(offset_thorax)}
+        body_constants = {'I_': inertia,'mass_':mass,'com_':com,'offset_':offset,'c': c,'g': g}
+        other_constants = {'offset_humerus_rot':list(offset_humerus_rot),'EL_rot_axis': list(EL_rot_axis),'PSY_rot_axis': list(PSY_rot_axis),
+                            'k_contact_in': k_contact_in,'eps_in': eps_in,'contTS': list(contTS),
+                            'contAI': list(contAI), 'elips_trans':list(elips_trans), 'elips_dim':list(elips_dim),
+                            'k_contact_out': k_contact_out,'eps_out': eps_out,
+                           'second_elips_scale':second_elips_scale, 'offset_thorax': list(offset_thorax)}
         
-#         usubs = sp.symbols('u1:11')
-#         qsubs = sp.symbols('q0:13')
+        usubs = sp.symbols('u1:12')
+        qsubs = sp.symbols('q0:14')
 
     # sympy dynamicsymbols has to be substituted with symbols (so it can be printed in octave_code)
 
-        # states = [qsubs,usubs]
-        # subs_q = {q[i]: qsubs[i] for i in range(len(q))}
-        # subs_u = {w[i]: usubs[i] for i in range(len(w))}
-        # mm = me.msubs(KM.mass_matrix_full,subs_q,subs_u)
-        # fo = me.msubs(KM.forcing_full,subs_q,subs_u)
+        states = [qsubs,usubs]
+        subs_q = {q[i]: qsubs[i] for i in range(len(q))}
+        subs_u = {w[i]: usubs[i] for i in range(len(w))}
+        mm = me.msubs(KM.mass_matrix_full,subs_q,subs_u)
+        fo = me.msubs(KM.forcing_full,subs_q,subs_u)
 
-#     # this creates Matlab functions
-#         MatlabFunction(function = mm,
-#                        fun_name = 'mm_quat',assignto = 'mm',
-#                        coordinates = qsubs,
-#                        speeds = usubs,
-#                        inputs = [],
-#                        body_constants = body_constants,
-#                        segments = segment,
-#                        other_constants=other_constants,
-#                        muscle_constants = {},
-#                        parameters = [first_elips_scale])
-#         MatlabFunction(function = fo,
-#                        fun_name = 'fo_quat',assignto = 'fo',
-#                        coordinates = qsubs,
-#                        speeds = usubs,
-#                        inputs = [],
-#                        body_constants = body_constants,
-#                        segments = segment,
-#                        other_constants=other_constants,
-#                        muscle_constants = {},
-#                        parameters = [first_elips_scale])
+    # this creates Matlab functions
+        MatlabFunction(function = mm,
+                       fun_name = 'mm_quat',assignto = 'mm',
+                       coordinates = qsubs,
+                       speeds = usubs,
+                       inputs = [],
+                       body_constants = body_constants,
+                       segments = segment,
+                       other_constants=other_constants,
+                       muscle_constants = {},
+                       parameters = [first_elips_scale],
+                       folder = 'quaternion')
+        MatlabFunction(function = fo,
+                       fun_name = 'fo_quat',assignto = 'fo',
+                       coordinates = qsubs,
+                       speeds = usubs,
+                       inputs = [],
+                       body_constants = body_constants,
+                       segments = segment,
+                       other_constants=other_constants,
+                       muscle_constants = {},
+                       parameters = [first_elips_scale],
+                       folder = 'quaternion')
 
     print('matlab functions generated')
 
@@ -1025,14 +1042,20 @@ def create_eoms_eul(model_struct,model_params_struct,initCond_name, derive = 'sy
     point_offset[3].v2pt_theory(point_offset[2],frame_ground,frame[3]);
 
     # radius and PSY joint (weld joint for now)
-    frame[4].orient_axis(frame[3],frame[3].z,0)
-    frame[4].set_ang_vel(frame[3],0)
+    frame[4].orient_axis(frame[3],frame[3].x*PSY_rot_axis[0]
+                         +frame[3].y*PSY_rot_axis[1]+frame[3].z*PSY_rot_axis[2],
+                         0) #q[10]
     masscenter[4].set_pos(point_offset[3],com[0+4*3]*frame[4].x + com[1+4*3]*frame[4].y + com[2+4*3]*frame[4].z)
     masscenter[4].v2pt_theory(point_offset[3],frame_ground,frame[4])
     FG.append((masscenter[4], -mass[4] * g * frame_ground.y))
+    # DAMP.append(((frame[4]),-c*u[10]*(ulna_rot_frame.x*EL_rot_axis[0]+ulna_rot_frame.y*EL_rot_axis[1]
+    #                         +ulna_rot_frame.z*EL_rot_axis[2])))
+    # DAMP.append((ulna_rot_frame,c*u[9]*(ulna_rot_frame.x*EL_rot_axis[0]+ulna_rot_frame.y*EL_rot_axis[1]
+    #                             +ulna_rot_frame.z*EL_rot_axis[2])))
+    # kindeq.append(u[10]-q[10].diff(t))
 
-    point_offset[4].set_pos(point_offset[3],offset[0+4*3]*frame[3].x + offset[1+4*3]*frame[3].y + offset[2+4*3]*frame[3].z)
-    point_offset[4].v2pt_theory(point_offset[3],frame_ground,frame[3])
+    point_offset[4].set_pos(point_offset[3],offset[0+4*3]*frame[4].x + offset[1+4*3]*frame[4].y + offset[2+4*3]*frame[4].z)
+    point_offset[4].v2pt_theory(point_offset[3],frame_ground,frame[4])
 
     # hand
     frame[5].orient_axis(frame[4],frame[4].z,0)
@@ -1130,7 +1153,7 @@ def create_eoms_eul(model_struct,model_params_struct,initCond_name, derive = 'sy
     if gen_matlab_functions == 1:
     
         body_constants = {'I_': inertia,'mass_':mass,'com_':com,'offset_':offset,'c': c,'g': g}
-        other_constants = {'offset_humerus_rot':list(offset_humerus_rot),'EL_rot_axis': list(EL_rot_axis),
+        other_constants = {'offset_humerus_rot':list(offset_humerus_rot),'EL_rot_axis': list(EL_rot_axis),'PSY_rot_axis': list(PSY_rot_axis),
                             'k_contact_in': k_contact_in,'eps_in': eps_in,'contTS': list(contTS),
                             'contAI': list(contAI), 'elips_trans':list(elips_trans), 'elips_dim':list(elips_dim),
                             'k_contact_out': k_contact_out,'eps_out': eps_out,'second_elips_scale':second_elips_scale, 'offset_thorax': list(offset_thorax)}
@@ -1323,8 +1346,8 @@ def MatlabFunction(function,fun_name,assignto,coordinates,speeds,inputs,body_con
     list_of_variables = [speeds,inputs, body_constants, muscle_constants, parameters]
     list_of_variables_names = [',u',',inputs',',model',',fmax, lceopt, lslack',',parameters']
     
-    text_file = open(f"../equations_of_motion/{fun_name}.m","w")
-    with open(f"../equations_of_motion/{fun_name}.m","w") as text_file:
+    text_file = open(f"../equations_of_motion/{folder}/{fun_name}.m","w")
+    with open(f"../equations_of_motion/{folder}/{fun_name}.m","w") as text_file:
         # function .. = .. ()
         header = f"function {assignto} = {fun_name}(t,q" #,u,act,model,opt_var)
         
