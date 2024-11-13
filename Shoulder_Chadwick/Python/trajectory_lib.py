@@ -30,7 +30,7 @@ def exp_trajectory_eul(mot_struct_name,num_nodes):
     duration = time[-1]
     time_new = np.linspace(0,duration,num_nodes)
     
-    eul_coords = mot_struct['coords_struct']['mot_euler_mod'][0,0]
+    eul_coords = mot_struct['coords_struct']['mot_euler_mod'][0,0] #mot_euler_mod
     num_coords = np.shape(eul_coords)[1]
     eul_new = np.zeros([num_nodes,num_coords])
     interval_value = duration/(num_nodes - 1)
@@ -87,34 +87,39 @@ def sol2mot_quat(solution, num_nodes, num_q, time, file_name = 'traj_opt.mot'):
     traj_splitted = np.vstack(np.split(traj_quat,num_q)).T
     joints = ('YZX','YZX','YZY','rev')
     traj_eul = np.zeros([num_nodes,10])
+
+    # print(np.shape(traj_splitted))
     
     for i,jnt in enumerate(joints):
         if jnt != 'rev':
-            traj_eul[:,i*3:(i+1)*3] = quat2eul(traj_splitted[:,i*4:(i+1)*4],jnt)
+            for j in range(num_nodes):
+                traj_eul[j,i*3:(i+1)*3] = quat2eul(traj_splitted[j,i*4:(i+1)*4],jnt)
         else:
             traj_eul[:,i*3] = traj_splitted[:,i*4]
             
     traj_eul = traj_eul*180/np.pi
     
-#     text_file = open(f"{file_name}","w")
-#     with open(f'{file_name}',"w") as text_file:
-#         print(f'Simulation',file=text_file)
-#         print(f'nRows={num_nodes}',file=text_file)
-#         print(f'nColumns={10+5}',file = text_file)
-#         print(f'endheader',file = text_file)
-#         print(f'time  TH_x TH_y TH_z SC_y  SC_z  SC_x  AC_y  AC_z  AC_x  GH_y  GH_z  GH_yy  EL_x  PS_y',file = text_file)
+    text_file = open(f"{file_name}","w")
+    with open(f'{file_name}',"w") as text_file:
+        print(f'Simulation',file=text_file)
+        print(f'nRows={num_nodes}',file=text_file)
+        print(f'nColumns={10+5}',file = text_file)
+        print(f'endheader',file = text_file)
+        print(f'time  TH_x TH_y TH_z SC_y  SC_z  SC_x  AC_y  AC_z  AC_x  GH_y  GH_z  GH_yy  EL_x  PS_y',file = text_file)
         
-#         for i in range(num_nodes):
-#             for j in range(10):
-#                 if j == 0 :
-#                     print(f'{time[i]}  0.000000  0.000000  0.000000  {traj_eul[i,j]}', end = '  ',file = text_file)
-#                 elif j == 9:
-#                     print(f'{traj_eul[i,j]}  0.000000', file = text_file)
-#                 else:
-#                     print(f'{traj_eul[i,j]}', end = '  ',file = text_file)
+        for i in range(num_nodes):
+            for j in range(10):
+                if j == 0 :
+                    print(f'{time[i]}  0.000000  0.000000  0.000000  {traj_eul[i,j]}', end = '  ',file = text_file)
+                elif j == 9:
+                    print(f'{traj_eul[i,j]}  0.000000', file = text_file)
+                else:
+                    print(f'{traj_eul[i,j]}', end = '  ',file = text_file)
                         
         
-#     text_file.close()
+    text_file.close()
+
+    print('Saved to .mot file')
     
     return traj_splitted
 
@@ -154,9 +159,19 @@ def input2mat(solution, num_nodes, num_states, activations, time):
     return data
 
 def quat2eul(quat,seq):
-    rot = spat.from_quat(quat)
-    eul = rot.as_euler(seq)
-    
+    rotm = Qrm(quat)
+
+    if seq == 'YZY':
+        z = np.arccos(rotm[1,1])
+        yy = np.arctan2(rotm[1,2],rotm[1,0])
+        y = np.arctan2(rotm[2,1],-rotm[0,1])
+        eul = np.array([y,z,yy])
+    elif seq == 'YZX':
+        z = np.arcsin(rotm[1,0])
+        x = np.arctan2(-rotm[1,2],rotm[1,1])
+        y = np.arctan2(-rotm[2,0],rotm[0,0])
+        eul = np.array([y,z,x])
+
     return eul
 
 def eul2quat(eul,seq):
@@ -164,3 +179,15 @@ def eul2quat(eul,seq):
     quat = rot.as_quat(scalar_first=True)
     
     return quat
+
+def Qrm(q):
+    w = q[0]
+    x = q[1]
+    y = q[2]
+    z = q[3]
+    res =  np.array([[1-2*(y**2+z**2), 2*(x*y-z*w), 2*(x*z+y*w),0],
+                      [2*(x*y+z*w), 1-2*(x**2+z**2), 2*(y*z-x*w),0],
+                      [2*(x*z-y*w), 2*(y*z+x*w), 1-2*(x**2+y**2),0],
+                      [0           ,0          ,0             ,1]])
+
+    return res
