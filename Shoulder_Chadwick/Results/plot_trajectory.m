@@ -5,7 +5,7 @@ clearvars
 
 motion = 'abd'; %steering or abd
 
-folders = {['eul_',motion,'_eulIC'],['quat_',motion,'_eulIC']};
+folders = {['eul_',motion],['quat_',motion]};
 dofs_names = {'SCy','SCz','SCx','ACy','ACz','ACx','GHy','GHz','GHyy','ELx','PSy'};
 num_coords = 10;
 
@@ -25,7 +25,7 @@ tiledlayout(4,3);
 for i = 1:num_coords
     nexttile
     IK_interp = spline(time_IK,trajectory_IK(:,i),time);
-    plot(time,trajectory_euler(:,i)*180/pi, time, trajectory_quat(:,i)*180/pi,time,IK_interp*180/pi,'LineWidth',1)
+    plot(time,trajectory_euler(:,i)*180/pi,'--', time, trajectory_quat(:,i)*180/pi,'-.',time,IK_interp*180/pi,'LineWidth',1.5)
     xlabel('time')
     ylabel('angle[°]')
     title(dofs_names{i})

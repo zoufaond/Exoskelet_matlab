@@ -120,8 +120,6 @@ def sol2mot_quat(solution, num_nodes, num_q, time, file_name = 'traj_opt.mot'):
     text_file.close()
 
     print('Saved to .mot file')
-    
-    return traj_splitted
 
 def quat2matfile(solution,activations,num_q,num_states,num_nodes,time,file_name):
     

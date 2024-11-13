@@ -6,7 +6,7 @@ num_muscles = length(muscles);
 muscle_group = 'serr_ant';
 motion = 'abd'; %steering or abd
 
-folders = {['eul_',motion,'_eulIC'],['quat_',motion,'_eulIC']};
+folders = {['eul_',motion],['quat_',motion]};
 
 for i = 1:num_muscles
     muscle_names{i} = muscles{i}.osim_name;
