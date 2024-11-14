@@ -121,16 +121,17 @@ def sol2mot_quat(solution, num_nodes, num_q, time, file_name = 'traj_opt.mot'):
 
     print('Saved to .mot file')
 
-def quat2matfile(solution,activations,num_q,num_states,num_nodes,time,file_name):
+def sol2struct(solution,activations,num_q,num_states,num_nodes,time,time2sol,file_name):
     
     trajectories = np.zeros([num_nodes, num_q])
     for i in range(num_q):
         trajectories[:,i] = solution[(i)*num_nodes:(i+1)*num_nodes]
-    input_data = input2mat(solution, num_nodes, num_states, activations, time)
+    inputs = input2mat(solution, num_nodes, num_states, activations, time)
     data = {
                 'tout': time,
                 'trajectories': trajectories,
-                'inputs': input_data
+                'inputs': inputs,
+                'time2sol': time2sol
                     }
     sc.io.savemat(f'{file_name}', {'data': data})
     print('Saved to .mat file')

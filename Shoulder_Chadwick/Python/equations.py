@@ -1190,7 +1190,7 @@ def create_eoms_eul(model_struct,model_params_struct,initCond_name, derive = 'sy
                        parameters = [first_elips_scale],
                        folder = 'euler')
 
-    print('matlab functions generated')
+        print('matlab functions generated')
 
     return MM,FO,TE,TE_conoid,q,u,fr,frstar,kindeq,xdot,activations
 
