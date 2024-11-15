@@ -3,7 +3,7 @@ addpath ../
 model = load('das3_eul.mat');
 muscles = model.model_full_eul.muscles;
 num_muscles = length(muscles);
-muscle_group = 'supra';
+muscle_group = 'trap_scap';
 motion = 'abd'; %steering or abd
 
 folders = {['eul_',motion],['quat_',motion]};

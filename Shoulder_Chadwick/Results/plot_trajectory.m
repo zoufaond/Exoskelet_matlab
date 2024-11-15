@@ -1,6 +1,7 @@
 addpath ../Functions/
 addpath ../Motion
 addpath ../Motion/abduciton/
+
 clearvars
 
 motion = 'abd'; %steering or abd
