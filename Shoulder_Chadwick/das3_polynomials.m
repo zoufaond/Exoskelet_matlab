@@ -20,6 +20,8 @@ muscles = model.muscles;
 import org.opensim.modeling.*
 Mod = Model(osimfile);
 
+cd Motions\Abduction\
+
 % this is needed to get the GH lines of action in the scapular frame
 SimEn = SimbodyEngine();
 SimEn.connectSimbodyEngineToModel(Mod);
