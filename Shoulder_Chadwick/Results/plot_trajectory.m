@@ -25,7 +25,7 @@ tiledlayout(4,3);
 for i = 1:num_coords
     nexttile
     IK_interp = spline(time_IK,trajectory_IK(:,i),time);
-    plot(time,trajectory_euler(:,i)*180/pi,'--', time, trajectory_quat(:,i)*180/pi,'-.',time,IK_interp*180/pi,'LineWidth',1.5)
+    plot(time,trajectory_euler(:,i),'--', time, trajectory_quat(:,i),'-.',time,IK_interp,'LineWidth',1.5)
     xlabel('time')
     ylabel('angle[°]')
     title(dofs_names{i})
