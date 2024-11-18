@@ -469,6 +469,9 @@ if nargin>1
         end
         error(['No polynomial muscle path found for ', miss_names '. Please run das3_polynomials.m']);
     end
+
+    save()
+
 end
 
 end

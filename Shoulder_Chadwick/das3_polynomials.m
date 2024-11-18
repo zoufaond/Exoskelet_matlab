@@ -1,4 +1,4 @@
-function das3_polynomials(osimfile,mydir,musclepolyfile,GHpolyfile)
+function das3_polynomials(osimfile,mydir,motion,musclepolyfile,GHpolyfile)
 % builds .mat files that contain polynomial approximations of all moment
 % arms and GH lines of action for the das3 model
 %
@@ -19,8 +19,6 @@ muscles = model.muscles;
 
 import org.opensim.modeling.*
 Mod = Model(osimfile);
-
-cd Motions\Abduction\
 
 % this is needed to get the GH lines of action in the scapular frame
 SimEn = SimbodyEngine();
@@ -59,10 +57,10 @@ shoulder_dofs = {'SCy','SCz','SCx','ACy','ACz','ACx','GHy','GHz','GHyy'};
 % % All combinations of all angles
 % sh_elbow_pro_sup = array2table((combvec(shoulder{:,:}',elbow{:,:}'))','VariableNames',[shoulder_dofs, 'ELx', 'PSy']);
 
-motion_name = 'mot_clavmod';
+[motion_path,motion_name,extension] = fileparts(motion);
 
-copyfile([motion_name,'.mot'], [motion_name,'.txt'])
-data_motion = readmatrix([motion_name,'.txt']);
+copyfile([motion_path,'\',motion_name,extension], [motion_path,'\',motion_name,'.txt'])
+data_motion = readmatrix([motion_path,'\',motion_name,'.txt']);
 time = data_motion(:,1);
 angles = data_motion(:,2:end)*pi/180;
 
@@ -118,16 +116,16 @@ for imus = 1:length(model.muscles)
         % if the muscle crosses GH, also get the lines of action
         if any(strcmp('GHy',mus.dof_names))
             [alllengths, allmomarms,quat_J, allGHfvecs] = opensim_get_polyvalues(Mod, alljnts, alljntsQ, mus.name, imus, mus.dof_indeces, SimEn, groundbody, scapulabody);
-            save([mydir '\path_' mus.name],'alljnts','alllengths','alljntsQ','alljntsQA','allmomarms','quat_J');        
-            save([mydir '\GHfvec_' mus.name],'alljnts','allGHfvecs');        
+            save([motion_path,'\',mydir '\path_' mus.name],'alljnts','alllengths','alljntsQ','alljntsQA','allmomarms','quat_J');        
+            save([motion_path,'\',mydir '\GHfvec_' mus.name],'alljnts','allGHfvecs');        
             disp([mus.name, ' lengths, moment arms and GH force vectors saved.']);
         else
             [alllengths, allmomarms, quat_J] = opensim_get_polyvalues(Mod, alljnts, alljntsQ, mus.name, imus, mus.dof_indeces);
-            save([mydir '\path_' mus.name],'alljnts','alllengths','alljntsQ','alljntsQA','allmomarms','quat_J');        
+            save([motion_path,'\',mydir '\path_' mus.name],'alljnts','alllengths','alljntsQ','alljntsQA','allmomarms','quat_J');        
             disp([mus.name, ' lengths and moment arms saved.']);
         end
         
-        make_mot_file([mydir '\angles_' mus.name '.mot'],alljnts,dof_names);
+        make_mot_file([motion_path,'\',mydir '\angles_' mus.name '.mot'],alljnts,dof_names);
         % disp(['Opensim motion file for muscle ', mus.name, ' created.']);
 
 
@@ -140,10 +138,10 @@ for imus = 1:length(model.muscles)
 end
 
 %% generate polynomial approximations of lengths
-if nargin>2, musclepath_poly(muscles,mydir,musclepolyfile); end
+if nargin>3, musclepath_poly(muscles,mydir,motion_path,musclepolyfile); end
 
 %% generate polynomial approximations of GH lines of action
-if nargin>3, GH_poly(muscles,mydir,GHpolyfile); end
+if nargin>4, GH_poly(muscles,mydir,GHpolyfile); end
 
 
 %=============================================================================================
@@ -382,6 +380,9 @@ for istep = 1:size(angles,1)
 
         % for i=1:numdata
         for j=1:length(joints)
+            if angles(istep,11) == 0
+                angles(istep,11) = angles(istep,11) + 1e-3;
+            end
             currentjnt = angles(istep,(joints(j)-1)*3+1:(joints(j)-1)*3+3);
             currentQ = quaternions(istep,(joints(j)-1)*4+1:(joints(j)-1)*4+4);
             currentmomarm = minusdLdq(istep,(j-1)*3+1:(j-1)*3+3);
@@ -399,7 +400,7 @@ end
 
 
 %=============================================================================================
-function musclepath_poly(muscles,mydir,musclepolyfile)
+function musclepath_poly(muscles,mydir,motion_path,musclepolyfile)
 
 % Based on pathpoly.m by Ton van den Bogert
 %
@@ -442,7 +443,7 @@ end
 
 
 % log file (output)
-logfilename = [mydir '\pathpoly_' current_poly '.log'];
+logfilename = [motion_path,'\',mydir '\pathpoly_' current_poly '.log'];
 logfile = fopen(logfilename,'w');
 if (logfile < 0)
     errordlg(['Could not open log file ',logfilename,' for writing'],'File Error');
@@ -451,7 +452,7 @@ if (logfile < 0)
 end
 
 % results file (output)
-polyfilename = [mydir '\' musclepolyfile '_' current_poly '.txt'];
+polyfilename = [motion_path,'\',mydir '\' musclepolyfile '_' current_poly '.txt'];
 polyfile = fopen(polyfilename,'w');
 if (polyfile < 0)
     errordlg(['Could not open results file ',polyfilename,' for writing'],'File Error');
@@ -460,7 +461,7 @@ if (polyfile < 0)
 end
 
 % mat file, if it exists, append, don't overwrite
-matfilename = [mydir '\' musclepolyfile '_' current_poly '.mat'];
+matfilename = [motion_path,'\',mydir '\' musclepolyfile '_' current_poly '.mat'];
 if exist(matfilename,'file')
     polys = load(matfilename);
     mus_model = polys.mus_model;
@@ -470,7 +471,7 @@ end
 for imus = 1:length(muscles)
     
     % get moment arms and lengths out of the .mat files
-    musfilename = [mydir,'\path_',muscles{imus}.name,'.mat'];
+    musfilename = [motion_path,'\',mydir,'\path_',muscles{imus}.name,'.mat'];
     ma = load(musfilename);
         
     mus = muscles{1,imus};
@@ -789,7 +790,7 @@ if (polyfile < 0)
 end
 
 % mat file, if it exists, append, don't overwrite
-matfilename = [mydir '\' musclepolyfile '.mat'];
+matfilename = [motion_path,'\',mydir '\' musclepolyfile '.mat'];
 % if exist(matfilename,'file')
 %     polys = load(matfilename);
 %     GH_model = polys.GH_model;
