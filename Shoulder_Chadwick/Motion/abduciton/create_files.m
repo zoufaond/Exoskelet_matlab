@@ -6,8 +6,8 @@ data_model = load('mot_struct_rigged.mat');
 
 coords_struct_clavmod.tout = data_model.coords_struct.tout;
 coords_struct_clavmod.data = data_model.coords_struct.mot_euler_mod;
-coords_struct_clavmod.data(:,8) = coords_struct_clavmod.data(:,8) - coords_struct_clavmod.data(2,8);
-data2mot(coords_struct_clavmod,'abd_rigged.mot','euler', 'struct');
+% coords_struct_clavmod.data(:,8) = coords_struct_clavmod.data(:,8) - coords_struct_clavmod.data(2,8);
+% data2mot(coords_struct_clavmod,'abd_rigged.mot','euler', 'struct');
 
 
 

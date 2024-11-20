@@ -1,5 +1,5 @@
 clearvars
-motion = 'Motions\Abduction_rigged2\abd_rigged.mot';
+motion = 'Motions\Abduction\abduction.mot';
 [motion_path,motion_name,extension] = fileparts(motion);
 osim_file = 'das3.osim';
 mydir = 'Polyfiles';

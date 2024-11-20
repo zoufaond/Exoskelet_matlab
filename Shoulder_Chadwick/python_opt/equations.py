@@ -38,9 +38,13 @@ def polynomials_euler(model_struct,q,derive,model_params_struct, initCond_name, 
         muscle_constants = {}
         
         for i in range(nmus):
-            fmax.append(model_params_struct['params'][initCond_name][0,0]['fmax'][0,0][i,0].item())
-            lceopt.append(model_params_struct['params'][initCond_name][0,0]['lceopt'][0,0][i,0].item())
-            lslack.append(model_params_struct['params'][initCond_name][0,0]['lslack'][0,0][i,0].item())
+            # fmax.append(model_params_struct['params'][initCond_name][0,0]['fmax'][0,0][i,0].item())
+            # lceopt.append(model_params_struct['params'][initCond_name][0,0]['lceopt'][0,0][i,0].item())
+            # lslack.append(model_params_struct['params'][initCond_name][0,0]['lslack'][0,0][i,0].item())
+            muscle = model_struct['model']['muscles'].item()[0,i]
+            fmax.append(muscle['fmax'][0,0].item())
+            lceopt.append(muscle['lceopt'][0,0].item())
+            lslack.append(muscle['lslack'][0,0].item())       
             
     mus_lengths = sp.zeros(nmus,1)
     mus_forces = sp.zeros(nmus,1)
@@ -212,9 +216,13 @@ def polynomials_quat(model_struct,q,derive,model_params_struct, initCond_name, f
         muscle_constants = {}
         
         for i in range(nmus):
-            fmax.append(model_params_struct['params'][initCond_name][0,0]['fmax'][0,0][i,0].item())
-            lceopt.append(model_params_struct['params'][initCond_name][0,0]['lceopt'][0,0][i,0].item())
-            lslack.append(model_params_struct['params'][initCond_name][0,0]['lslack'][0,0][i,0].item())
+            # fmax.append(model_params_struct['params'][initCond_name][0,0]['fmax'][0,0][i,0].item())
+            # lceopt.append(model_params_struct['params'][initCond_name][0,0]['lceopt'][0,0][i,0].item())
+            # lslack.append(model_params_struct['params'][initCond_name][0,0]['lslack'][0,0][i,0].item())
+            muscle = model_struct['model']['muscles'].item()[0,i]
+            fmax.append(muscle['fmax'][0,0].item())
+            lceopt.append(muscle['lceopt'][0,0].item())
+            lslack.append(muscle['lslack'][0,0].item())
             
     mus_lengths = sp.zeros(nmus,1)
     mus_forces = sp.zeros(nmus,1)
