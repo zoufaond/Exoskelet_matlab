@@ -10,7 +10,7 @@ for jnt = 1:length(mot_eul(1,:))
         figure
         plot(time,mot_eul(:,jnt),'o')
         hold on
-        plot(time,y1)
+        plot(time,out.data(:,jnt))
     end
 end
 

@@ -1,9 +1,9 @@
 addpath Functions/
 
 %choose two results struct to compare
-folder_path = 'Motions/Abduction/';
-motion_name = 'abduction.mat';
-folders = {[folder_path,'results_euler_EulInit.mat'],[folder_path,'results_quat_InitQuat.mat']};
+folder_path = 'Motions/Elevation/';
+motion_name = 'elevation.mat';
+folders = {[folder_path,'results_euler_EulInit_150_01.mat'],[folder_path,'results_quat_QuatInit_300_02.mat']};
 OS_struct = load([folder_path,motion_name]);
 % plot_kinematics(folders,OS_struct)
 
@@ -15,8 +15,11 @@ plot_activations(folders,muscle_group,OS_model)
 
 function plot_activations_EMG(folders, EMG_struct, OS_model)
 
-EMG_muscles = {'AnteriorDelt','IntermediateDelt','Infrasp','MiddleTrap','UpperTrap','PosteriorDelt','Serrupper', 'Serrlower'};
-model_names = {'delt_clav_1','delt_scap10','infra_1','trap_scap_4','trap_scap10','delt_scap_3','serr_ant_6','serr_ant_1'};
+EMG_muscles = {'AnteriorDelt','IntermediateDelt','PosteriorDelt','Infrasp','MiddleTrap','UpperTrap','Serrupper', 'Serrlower'};
+model_names = {'delt_scap11','delt_scap_9','delt_scap_3','infra_1','trap_scap_4','trap_scap10','serr_ant_3','serr_ant_2'};
+
+simulation = load(folders{2});
+time_simulation = simulation.data.tout;
 
 emg_data = load(EMG_struct);
 model = load(OS_model);
@@ -27,26 +30,44 @@ for i = 1:num_muscles
     muscle_names{i} = muscles{i}.osim_name;
 end
 
-for i = 1:length(model_names)
-    find(strcmp(muscle_names,model_names{i}))
-end
+
 figure
 tiledlayout(4,2);
+
+current_emg_rsmpld = zeros(length(time_simulation),size(emg_data.data.(EMG_muscles{1}),2));
 for i = 1:length(EMG_muscles)
     nexttile
-    current_emg = emg_data.data.(EMG_muscles{i});
+    current_emg_full = emg_data.data.(EMG_muscles{i});
+    current_emg = current_emg_full(1:end/2,:);
     time = linspace(0,1.5,size(current_emg,1));
-    [S,M] = std(current_emg,0,2);
+    for ipar = 1:size(current_emg,2)
+        current_emg_rsmpld(:,ipar) = spline(time,current_emg(:,ipar),time_simulation);
+    end
+    [S,M] = std(current_emg_rsmpld,0,2);
     upper_bound = M+S;
     lower_bound = M-S;
-    plot(time,M,'k')
+    plot(time_simulation,M,'k')
     hold on
-    plot(time,upper_bound,'k',time,lower_bound,'k')
+    plot(time_simulation,upper_bound,'k',time_simulation,lower_bound,'k')
+    hold on
+    mus_index = find(strcmp(muscle_names,model_names{i}));
+    plot(time_simulation,simulation.data.inputs(:,mus_index),'r','LineWidth',1.5)
     hold on
     % patch([time' fliplr(time')], [lower_bound fliplr(upper_bound)], 'g')
-    fill([time'; flip(time')],[lower_bound; flip(upper_bound)], 'b', 'edgecolor', 'none', 'facealpha', 0.1);
+    fill([time_simulation'; flip(time_simulation')],[lower_bound; flip(upper_bound)], 'b', 'edgecolor', 'none', 'facealpha', 0.1);
     title(EMG_muscles{i})
+    axis([-inf inf 0 inf])
+    xlabel('Time[s]')
+    ylabel('Activation[-]')
+    legend('Exp','','','Sim');
 end
+
+% fig = gcf;
+% fig.Position(3) = fig.Position(3) + 250;
+% Lgnd = legend('Exp','','','Sim');
+% Lgnd.Position(1) = 0.9;
+% Lgnd.Position(2) = 0.9;
+% sgtitle('Activations', 'Interpreter', 'none')
 
 
 end
@@ -110,21 +131,25 @@ for i = 1:num_coords
         else
             trajectory_euler = trajectory;
         end
-        plot(time,trajectory_euler(:,i),'--','LineWidth',1.5)
+        plot(time,trajectory_euler(:,i)*180/pi,'--','LineWidth',1.5)
         hold on
+        title(dofs_names{i})
         % plot(time, trajectory_quat(:,i),'-.','LineWidth',1.5)
         % hold on
     end
     time = jmot.data.tout';
     OS_interp = spline(OS_struct.mot_struct.time,OS_struct.mot_struct.euler(:,i),time');
     %
-    plot(time,OS_interp)
+    plot(time,OS_interp*180/pi)
+
+    xlabel('Time [s]')
+    ylabel('Angle [deg]')
 
 
 
 end
 
-legend({'e','q','OS'})
+legend({'Euler','Quat','Experiment'})
 
 end
 
