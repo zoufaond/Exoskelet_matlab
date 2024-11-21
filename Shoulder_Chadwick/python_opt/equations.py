@@ -127,16 +127,17 @@ def polynomials_euler(model_struct,q,derive,model_params_struct, initCond_name, 
         mus_lengths_subbed = me.msubs(mus_lengths,q_subs_dict)
         mus_forces_subbed = me.msubs(mus_forces,q_subs_dict)
         
-        # MatlabFunction(function = TE_conoid_subbed[:-1],
-        #                fun_name = 'TE_conoid_eul', assignto = 'TE_conoid',
-        #                coordinates = qsubs,
-        #                speeds = [],
-        #                inputs = [],
-        #                body_constants = {},
-        #                segments = [],
-        #                other_constants = {},
-        #                muscle_constants = {},
-        #                parameters = [])
+        MatlabFunction(function = TE_conoid_subbed[:-1],
+                       fun_name = 'TE_conoid_eul', assignto = 'TE_conoid',
+                       coordinates = qsubs,
+                       speeds = [],
+                       inputs = [],
+                       body_constants = {},
+                       segments = [],
+                       other_constants = {},
+                       muscle_constants = {},
+                       parameters = [],
+                       folder = 'euler')
         MatlabFunction(function = TE_subbed,
                        fun_name = 'TE_eul', assignto = 'TE',
                        coordinates = qsubs,
@@ -148,36 +149,39 @@ def polynomials_euler(model_struct,q,derive,model_params_struct, initCond_name, 
                        muscle_constants = muscle_constants,
                        parameters = [],
                        folder = 'euler')
-        # MatlabFunction(function = mus_forces_subbed,
-        #                fun_name = 'mus_forces_eul', assignto = 'mus_forces',
-        #                coordinates = qsubs,
-        #                speeds = [],
-        #                inputs = actSym,
-        #                body_constants = {},
-        #                segments = [],
-        #                other_constants={},
-        #                muscle_constants = muscle_constants,
-        #                parameters = [])
-        # MatlabFunction(function = jacobian_subbed,
-        #                fun_name = 'jacobian_eul',assignto = 'jacobian',
-        #                coordinates = qsubs,
-        #                speeds = [],
-        #                inputs = [],
-        #                body_constants = {},
-        #                segments = [],
-        #                other_constants={},
-        #                muscle_constants = {},
-        #                parameters = [])
-        # MatlabFunction(function = mus_lengths_subbed,
-        #                fun_name = 'mus_lengths_eul',assignto = 'mus_lengths',
-        #                coordinates = qsubs,
-        #                speeds = [],
-        #                inputs = [],
-        #                body_constants = {},
-        #                segments = [],
-        #                other_constants={},
-        #                muscle_constants = {},
-        #                parameters = [])
+        MatlabFunction(function = mus_forces_subbed,
+                       fun_name = 'mus_forces_eul', assignto = 'mus_forces',
+                       coordinates = qsubs,
+                       speeds = [],
+                       inputs = actSym,
+                       body_constants = {},
+                       segments = [],
+                       other_constants={},
+                       muscle_constants = muscle_constants,
+                       parameters = [],
+                       folder = 'euler')
+        MatlabFunction(function = jacobian_subbed,
+                       fun_name = 'jacobian_eul',assignto = 'jacobian',
+                       coordinates = qsubs,
+                       speeds = [],
+                       inputs = [],
+                       body_constants = {},
+                       segments = [],
+                       other_constants={},
+                       muscle_constants = {},
+                       parameters = [],
+                       folder = 'euler')
+        MatlabFunction(function = mus_lengths_subbed,
+                       fun_name = 'mus_lengths_eul',assignto = 'mus_lengths',
+                       coordinates = qsubs,
+                       speeds = [],
+                       inputs = [],
+                       body_constants = {},
+                       segments = [],
+                       other_constants={},
+                       muscle_constants = {},
+                       parameters = [],
+                       folder = 'euler')
     
     return TE_act_subbed, act, TE_conoid[:-1]
 
@@ -1148,14 +1152,11 @@ def create_eoms_eul(model_struct,model_params_struct,initCond_name, derive = 'sy
     cont_force2 = [(contact_point2,frame_ground.x*Fx2+frame_ground.y*Fy2+frame_ground.z*Fz2)]
     CONT = cont_force1+cont_force2
     
-    TE,activations,TE_conoid = polynomials_euler(model_struct,q,derive,model_params_struct,initCond_name,gen_matlab_functions)
-    print('TE created')
-    
-    KM = me.KanesMethod(frame_ground, q_ind=q, u_ind=u, kd_eqs=kindeq)
-    (fr, frstar) = KM.kanes_equations(BODY, (FG+DAMP+CONT))
-    MM = KM.mass_matrix_full
-    FO = KM.forcing_full
-    xdot = (KM.q.col_join(KM.u)).diff()
+    # KM = me.KanesMethod(frame_ground, q_ind=q, u_ind=u, kd_eqs=kindeq)
+    # (fr, frstar) = KM.kanes_equations(BODY, (FG+DAMP+CONT))
+    # MM = KM.mass_matrix_full
+    # FO = KM.forcing_full
+    # xdot = (KM.q.col_join(KM.u)).diff()
     print('equations created')
     
     if gen_matlab_functions == 1:
@@ -1200,7 +1201,8 @@ def create_eoms_eul(model_struct,model_params_struct,initCond_name, derive = 'sy
 
         print('matlab functions generated')
 
-    return MM,FO,TE,TE_conoid,q,u,fr,frstar,kindeq,xdot,activations
+    # return MM,FO,q,u,fr,frstar,kindeq,xdot
+    return q
 
 
 

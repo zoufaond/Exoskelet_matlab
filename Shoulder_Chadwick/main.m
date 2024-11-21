@@ -21,7 +21,6 @@ initQuat = params.InitPosOptEul.initCondQuat;
 % initEul(8) = 0; % gimbal lock
 % initQuat = motion.coords_struct.mot_quaternion_mod(1,:)';
 
-
 % muscles = opensim_model.model_full_quat.muscles;
 % for i=1:length(muscles)
 %     fmax(i,1) = muscles{i}.fmax;%*muscles_compensations(i);
