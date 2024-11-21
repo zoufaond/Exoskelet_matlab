@@ -1,5 +1,5 @@
 clearvars
-motion = 'Motions\Elevation\elevation.mot';
+motion = 'Motions\Steering\steering.mot';
 [motion_path,motion_name,extension] = fileparts(motion);
 osim_file = 'das3.osim';
 mydir = 'Polyfiles';

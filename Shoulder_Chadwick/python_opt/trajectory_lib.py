@@ -121,7 +121,7 @@ def sol2mot_quat(solution, num_nodes, num_q, time, file_name = 'traj_opt.mot'):
 
     print('Saved to .mot file')
 
-def sol2struct(solution,activations,num_q,num_states,num_nodes,time,time2sol,file_name):
+def sol2struct(solution,activations,num_q,num_states,num_nodes,time,num_iter_sol,time2sol,file_name):
     
     trajectories = np.zeros([num_nodes, num_q])
     for i in range(num_q):
@@ -131,7 +131,8 @@ def sol2struct(solution,activations,num_q,num_states,num_nodes,time,time2sol,fil
                 'tout': time,
                 'trajectories': trajectories,
                 'inputs': inputs,
-                'time2sol': time2sol
+                'time2sol': time2sol,
+                'num_iter_sol': num_iter_sol
                     }
     sc.io.savemat(f'{file_name}', {'data': data})
     print('Saved to .mat file')

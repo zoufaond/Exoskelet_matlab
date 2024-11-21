@@ -11,7 +11,7 @@ addpath Functions\
 addpath Motion\
 
 data = load('data_model.mat');
-opensim_model = load('das3_quat.mat');
+% opensim_model = load('das3_quat.mat');
 % motion = load('mot_struct.mat');
 model = data.params.model;
 params = data.params;
