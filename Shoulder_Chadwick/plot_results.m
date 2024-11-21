@@ -1,25 +1,26 @@
 addpath Functions/
 
 %choose two results struct to compare
-folder_path = 'Motions/Elevation/';
-motion_name = 'elevation.mat';
-folders = {[folder_path,'results_euler_EulInit_150_01.mat'],[folder_path,'results_quat_QuatInit_300_02.mat']};
+folder_path = 'Motions/Abduction/';
+motion_name = 'abduction.mat';
+folders = {[folder_path,'results_euler_EulInit_200_01.mat'],[folder_path,'results_quat_EulInit_150_01.mat']};
 OS_struct = load([folder_path,motion_name]);
-% plot_kinematics(folders,OS_struct)
+plot_kinematics(folders,OS_struct)
 
 muscle_group = {'trap_scap','serr_ant','delt_scap','delt_clav','infra'};
 OS_model = [folder_path,'OS_model.mat'];
 EMG_struct = 'Experimental_data/EMG_struct.mat';
 % plot_activations_EMG(folders, EMG_struct, OS_model);
-plot_activations(folders,muscle_group,OS_model)
+% plot_activations(folders,muscle_group,OS_model)
 
 function plot_activations_EMG(folders, EMG_struct, OS_model)
 
 EMG_muscles = {'AnteriorDelt','IntermediateDelt','PosteriorDelt','Infrasp','MiddleTrap','UpperTrap','Serrupper', 'Serrlower'};
-model_names = {'delt_scap11','delt_scap_9','delt_scap_3','infra_1','trap_scap_4','trap_scap10','serr_ant_3','serr_ant_2'};
+model_names = {'delt_scap11','delt_scap10','delt_scap_3','infra_1','trap_scap_7','trap_scap10','serr_ant_5','serr_ant_2'};
 
 simulation = load(folders{2});
-time_simulation = simulation.data.tout;
+ending_val = 0;
+time_simulation = simulation.data.tout(1:end-ending_val);
 
 emg_data = load(EMG_struct);
 model = load(OS_model);
@@ -51,7 +52,7 @@ for i = 1:length(EMG_muscles)
     plot(time_simulation,upper_bound,'k',time_simulation,lower_bound,'k')
     hold on
     mus_index = find(strcmp(muscle_names,model_names{i}));
-    plot(time_simulation,simulation.data.inputs(:,mus_index),'r','LineWidth',1.5)
+    plot(time_simulation,simulation.data.inputs(1:end-ending_val,mus_index),'r','LineWidth',1.5)
     hold on
     % patch([time' fliplr(time')], [lower_bound fliplr(upper_bound)], 'g')
     fill([time_simulation'; flip(time_simulation')],[lower_bound; flip(upper_bound)], 'b', 'edgecolor', 'none', 'facealpha', 0.1);
@@ -140,16 +141,24 @@ for i = 1:num_coords
     time = jmot.data.tout';
     OS_interp = spline(OS_struct.mot_struct.time,OS_struct.mot_struct.euler(:,i),time');
     %
-    plot(time,OS_interp*180/pi)
+    plot(time,OS_interp*180/pi,'g','LineWidth',1.5)
 
     xlabel('Time [s]')
     ylabel('Angle [deg]')
+    % legend({'Euler','Quat','Experiment'})
 
 
 
 end
 
-legend({'Euler','Quat','Experiment'})
+fig = gcf;
+fig.Position(3) = fig.Position(3) + 250;
+Lgnd = legend('Euler','Quat','Experiment');
+Lgnd.FontSize = 13;
+Lgnd.Position(1) = 0.4;
+Lgnd.Position(2) = 0.1;
+
+
 
 end
 
