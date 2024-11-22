@@ -15,6 +15,7 @@ data = load('data_model.mat');
 % motion = load('mot_struct.mat');
 model = data.params.model;
 params = data.params;
+joint_stiffness = 100;
 
 initEul = params.InitPosOptEul.initCondEul;
 initQuat = params.InitPosOptEul.initCondQuat;

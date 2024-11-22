@@ -79,11 +79,11 @@ def polynomials_euler(model_struct,q,derive,model_params_struct, initCond_name, 
              # Add this term's contribution to the muscle length
                 term = polcoeff[i]
                 for j in range(nmusdof.item()):
-                    mdof = musdof[j];
+                    mdof = musdof[j]
                     for k in range(expon_np[i,j].item()):
-                        term = term * qpol[int(mdof-1)];
+                        term = term * qpol[int(mdof-1)]
 
-                L = L + term;
+                L = L + term
                 
         mus_lengths[imus] = L
         mus_forces[imus] = muscle_force(actSym[imus],L,fmax[imus],lceopt[imus],lslack[imus])
@@ -116,6 +116,8 @@ def polynomials_euler(model_struct,q,derive,model_params_struct, initCond_name, 
     F_conoid = conoid_force(conoid_length, conoid_lopt, conoid_k, conoid_eps)
     jac_conoid = -sp.Matrix([conoid_length]).jacobian(qpol[3:]).T
     TE_conoid = F_conoid * jac_conoid
+
+    jnt_spring = joint_spring(q,model_params_struct,initCond_name)
     
     if gen_matlab_functions == 1:
         qsubs = sp.symbols('qsubs1:11')
@@ -126,53 +128,65 @@ def polynomials_euler(model_struct,q,derive,model_params_struct, initCond_name, 
         jacobian_subbed = me.msubs(jacobian,q_subs_dict)
         mus_lengths_subbed = me.msubs(mus_lengths,q_subs_dict)
         mus_forces_subbed = me.msubs(mus_forces,q_subs_dict)
+        jnt_spring_subbed = me.msubs(jnt_spring,q_subs_dict)
         
-        MatlabFunction(function = TE_conoid_subbed[:-1],
-                       fun_name = 'TE_conoid_eul', assignto = 'TE_conoid',
-                       coordinates = qsubs,
-                       speeds = [],
-                       inputs = [],
-                       body_constants = {},
-                       segments = [],
-                       other_constants = {},
-                       muscle_constants = {},
-                       parameters = [],
-                       folder = 'euler')
-        MatlabFunction(function = TE_subbed,
-                       fun_name = 'TE_eul', assignto = 'TE',
-                       coordinates = qsubs,
-                       speeds = [],
-                       inputs = actSym,
-                       body_constants = {},
-                       segments = [],
-                       other_constants={},
-                       muscle_constants = muscle_constants,
-                       parameters = [],
-                       folder = 'euler')
-        MatlabFunction(function = mus_forces_subbed,
-                       fun_name = 'mus_forces_eul', assignto = 'mus_forces',
-                       coordinates = qsubs,
-                       speeds = [],
-                       inputs = actSym,
-                       body_constants = {},
-                       segments = [],
-                       other_constants={},
-                       muscle_constants = muscle_constants,
-                       parameters = [],
-                       folder = 'euler')
-        MatlabFunction(function = jacobian_subbed,
-                       fun_name = 'jacobian_eul',assignto = 'jacobian',
-                       coordinates = qsubs,
-                       speeds = [],
-                       inputs = [],
-                       body_constants = {},
-                       segments = [],
-                       other_constants={},
-                       muscle_constants = {},
-                       parameters = [],
-                       folder = 'euler')
-        MatlabFunction(function = mus_lengths_subbed,
-                       fun_name = 'mus_lengths_eul',assignto = 'mus_lengths',
+        # MatlabFunction(function = TE_conoid_subbed[:-1],
+        #                fun_name = 'TE_conoid_eul', assignto = 'TE_conoid',
+        #                coordinates = qsubs,
+        #                speeds = [],
+        #                inputs = [],
+        #                body_constants = {},
+        #                segments = [],
+        #                other_constants = {},
+        #                muscle_constants = {},
+        #                parameters = [],
+        #                folder = 'euler')
+        # MatlabFunction(function = TE_subbed,
+        #                fun_name = 'TE_eul', assignto = 'TE',
+        #                coordinates = qsubs,
+        #                speeds = [],
+        #                inputs = actSym,
+        #                body_constants = {},
+        #                segments = [],
+        #                other_constants={},
+        #                muscle_constants = muscle_constants,
+        #                parameters = [],
+        #                folder = 'euler')
+        # MatlabFunction(function = mus_forces_subbed,
+        #                fun_name = 'mus_forces_eul', assignto = 'mus_forces',
+        #                coordinates = qsubs,
+        #                speeds = [],
+        #                inputs = actSym,
+        #                body_constants = {},
+        #                segments = [],
+        #                other_constants={},
+        #                muscle_constants = muscle_constants,
+        #                parameters = [],
+        #                folder = 'euler')
+        # MatlabFunction(function = jacobian_subbed,
+        #                fun_name = 'jacobian_eul',assignto = 'jacobian',
+        #                coordinates = qsubs,
+        #                speeds = [],
+        #                inputs = [],
+        #                body_constants = {},
+        #                segments = [],
+        #                other_constants={},
+        #                muscle_constants = {},
+        #                parameters = [],
+        #                folder = 'euler')
+        # MatlabFunction(function = mus_lengths_subbed,
+        #                fun_name = 'mus_lengths_eul',assignto = 'mus_lengths',
+        #                coordinates = qsubs,
+        #                speeds = [],
+        #                inputs = [],
+        #                body_constants = {},
+        #                segments = [],
+        #                other_constants={},
+        #                muscle_constants = {},
+        #                parameters = [],
+        #                folder = 'euler')
+        MatlabFunction(function = jnt_spring_subbed,
+                       fun_name = 'jnt_spring_eul',assignto = 'jnt_spring_eul',
                        coordinates = qsubs,
                        speeds = [],
                        inputs = [],
@@ -1157,54 +1171,52 @@ def create_eoms_eul(model_struct,model_params_struct,initCond_name, derive = 'sy
     # MM = KM.mass_matrix_full
     # FO = KM.forcing_full
     # xdot = (KM.q.col_join(KM.u)).diff()
-    print('equations created')
+    # print('equations created')
     
-    if gen_matlab_functions == 1:
+    # if gen_matlab_functions == 1:
     
-        body_constants = {'I_': inertia,'mass_':mass,'com_':com,'offset_':offset,'c': c,'g': g}
-        other_constants = {'offset_humerus_rot':list(offset_humerus_rot),'EL_rot_axis': list(EL_rot_axis),'PSY_rot_axis': list(PSY_rot_axis),
-                            'k_contact_in': k_contact_in,'eps_in': eps_in,'contTS': list(contTS),
-                            'contAI': list(contAI), 'elips_trans':list(elips_trans), 'elips_dim':list(elips_dim),
-                            'k_contact_out': k_contact_out,'eps_out': eps_out,'second_elips_scale':second_elips_scale, 'offset_thorax': list(offset_thorax)}
-        usubs = sp.symbols('u1:11')
-        qsubs = sp.symbols('q1:11')
+    #     body_constants = {'I_': inertia,'mass_':mass,'com_':com,'offset_':offset,'c': c,'g': g}
+    #     other_constants = {'offset_humerus_rot':list(offset_humerus_rot),'EL_rot_axis': list(EL_rot_axis),'PSY_rot_axis': list(PSY_rot_axis),
+    #                         'k_contact_in': k_contact_in,'eps_in': eps_in,'contTS': list(contTS),
+    #                         'contAI': list(contAI), 'elips_trans':list(elips_trans), 'elips_dim':list(elips_dim),
+    #                         'k_contact_out': k_contact_out,'eps_out': eps_out,'second_elips_scale':second_elips_scale, 'offset_thorax': list(offset_thorax)}
+    #     usubs = sp.symbols('u1:11')
+    #     qsubs = sp.symbols('q1:11')
 
-    # sympy dynamicsymbols has to be substituted with symbols (so it can be printed in octave_code)
+    # # sympy dynamicsymbols has to be substituted with symbols (so it can be printed in octave_code)
 
-        subs_q = {q[i]: qsubs[i] for i in range(len(q))}
-        subs_u = {u[i]: usubs[i] for i in range(len(u))}
-        mm = me.msubs(KM.mass_matrix_full,subs_q,subs_u)
-        fo = me.msubs(KM.forcing_full,subs_q,subs_u)
+    #     subs_q = {q[i]: qsubs[i] for i in range(len(q))}
+    #     subs_u = {u[i]: usubs[i] for i in range(len(u))}
+    #     mm = me.msubs(KM.mass_matrix_full,subs_q,subs_u)
+    #     fo = me.msubs(KM.forcing_full,subs_q,subs_u)
 
-        MatlabFunction(function = mm,
-                       fun_name = 'mm_eul',assignto = 'mm',
-                       coordinates = qsubs,
-                       speeds = usubs,
-                       inputs = [],
-                       body_constants = body_constants,
-                       segments = segment,
-                       other_constants=other_constants,
-                       muscle_constants = {},
-                       parameters = [first_elips_scale],
-                       folder = 'euler')
-        MatlabFunction(function = fo,
-                       fun_name = 'fo_eul',assignto = 'fo',
-                       coordinates = qsubs,
-                       speeds = usubs,
-                       inputs = [],
-                       body_constants = body_constants,
-                       segments = segment,
-                       other_constants=other_constants,
-                       muscle_constants = {},
-                       parameters = [first_elips_scale],
-                       folder = 'euler')
+    #     MatlabFunction(function = mm,
+    #                    fun_name = 'mm_eul',assignto = 'mm',
+    #                    coordinates = qsubs,
+    #                    speeds = usubs,
+    #                    inputs = [],
+    #                    body_constants = body_constants,
+    #                    segments = segment,
+    #                    other_constants=other_constants,
+    #                    muscle_constants = {},
+    #                    parameters = [first_elips_scale],
+    #                    folder = 'euler')
+    #     MatlabFunction(function = fo,
+    #                    fun_name = 'fo_eul',assignto = 'fo',
+    #                    coordinates = qsubs,
+    #                    speeds = usubs,
+    #                    inputs = [],
+    #                    body_constants = body_constants,
+    #                    segments = segment,
+    #                    other_constants=other_constants,
+    #                    muscle_constants = {},
+    #                    parameters = [first_elips_scale],
+    #                    folder = 'euler')
 
-        print('matlab functions generated')
+    #     print('matlab functions generated')
 
     # return MM,FO,q,u,fr,frstar,kindeq,xdot
     return q
-
-
 
 def muscle_force(act, lmt, fmax, lceopt, lslack):
     lm = lmt - lslack
@@ -1334,7 +1346,7 @@ def analytic_length_quat(origin, insertion, O_pos, I_pos, q, model):
         RC_S = Qrm(q[4:8]);
         I = TC_S * RC_S * position(I_pos);
 
-    muscle_length = sp.sqrt((O[0] - I[0])**2 + (O[1] - I[1])**2 + (O[2] - I[2])**2);
+    muscle_length = sp.sqrt((O[0] - I[0])**2 + (O[1] - I[1])**2 + (O[2] - I[2])**2)
     
     return muscle_length
 
@@ -1347,6 +1359,23 @@ def Qrm(q):
                       [2*(x*y+z*w), 1-2*(x**2+z**2), 2*(y*z-x*w),0],
                       [2*(x*z-y*w), 2*(y*z+x*w), 1-2*(x**2+y**2),0],
                       [0           ,0          ,0             ,1]])
+
+    return res
+
+def joint_spring(q,model_params_struct,initCond_name):
+    q0_joint = model_params_struct['params'][initCond_name][0,0]['initCondEul'].item()
+    # joint_stiffnes = model_params_struct['params']['model'].item()['joint_stiffnes'][0,0].item()
+    joint_stiffness = sp.symbols('joint_stiffness')
+    # q0_joint = sp.symbols('q0joint1:7')
+    SCx_spring = joint_stiffness*(-q[0]+q0_joint[0].item())
+    SCy_spring = joint_stiffness*(-q[1]+q0_joint[1].item())
+    SCz_spring = joint_stiffness*(-q[2]+q0_joint[2].item())
+    ACx_spring = joint_stiffness*(-q[3]+q0_joint[3].item())
+    ACy_spring = joint_stiffness*(-q[4]+q0_joint[4].item())
+    ACz_spring = joint_stiffness*(-q[5]+q0_joint[5].item())
+
+    res = sp.Matrix([SCx_spring-ACx_spring,SCy_spring-ACy_spring,SCz_spring-ACz_spring,ACx_spring,ACy_spring,ACz_spring,0,0,0,0])
+    # res = sp.Matrix([SCx_spring,SCy_spring,SCz_spring,0,0,0,0,0,0,0])
 
     return res
     
