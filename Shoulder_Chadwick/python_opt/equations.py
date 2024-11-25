@@ -5,6 +5,27 @@ import sympy.physics.mechanics as me
 from scipy.spatial.transform import Rotation as spat
 import pickle
 
+def objective_rotglob_quat(num_coords,interval_value):
+    x = sp.Matrix(sp.symbols(f'x1:{num_coords+1}'))
+    x_traj = sp.Matrix(sp.symbols(f'x_traj1:{num_coords+1}'))
+
+    SCrot = sp.Matrix(x[0:4])
+    scapula_thorax = sp.Matrix([mulQuat_sp(x[0:4],x[4:8])])
+    GH_rot = sp.Matrix(x[8:12])
+    elrot = sp.Matrix(x[12:13])
+
+    obj_SCrot = sp.Matrix([interval_value*sum((SCrot-sp.Matrix(x_traj[0:4])).applyfunc(lambda x: x**2))])
+    obj_scapula_thorax = sp.Matrix([interval_value*sum((scapula_thorax-sp.Matrix(x_traj[4:8])).applyfunc(lambda x: x**2))])
+    obj_GH_rot = sp.Matrix([interval_value*sum((GH_rot-sp.Matrix(x_traj[8:12])).applyfunc(lambda x: x**2))])
+    obj_elrot = sp.Matrix([interval_value*sum((elrot-sp.Matrix(x_traj[12:13])).applyfunc(lambda x: x**2))])
+    obj = obj_SCrot + obj_scapula_thorax + obj_GH_rot + obj_elrot
+    obj_traj_jac = (obj).jacobian(x)[:]
+    print(obj)
+    obj_traj_np = sp.lambdify((x,x_traj),obj)
+    obj_traj_jac_np = sp.lambdify((x,x_traj),obj_traj_jac)
+
+    # return obj_traj_np,obj_traj_jac_np
+
 def polynomials_euler(model_struct,q,derive,model_params_struct, initCond_name, gen_matlab_functions = None):
 
     q_thorax1 = me.dynamicsymbols('q_thorax1')
@@ -1734,21 +1755,29 @@ def create_eoms_u0state(model_struct,model_params_struct,initCond_name, derive =
     CONT = cont_force1+cont_force2
 
 
-    q_dep = [q[0],q[4],q[8]]
-    q_ind = q[1:4]+q[5:8]+q[9:]
-    holonomic = sp.Matrix([[q[0]**2+q[1]**2+q[2]**2+q[3]**2-1],
-                             [q[4]**2+q[5]**2+q[6]**2+q[7]**2-1],
-                             [q[8]**2+q[9]**2+q[10]**2+q[11]**2-1]])
-    KM = me.KanesMethod(frame_ground, q_ind=q_ind, u_ind=w, kd_eqs=kinematical,
-                        q_dependent = q_dep, u_dependent = u0, 
-                        configuration_constraints=holonomic,
-                        velocity_constraints=holonomic.diff(t))
+    # q_dep = [q[0],q[4],q[8]]
+    # q_ind = q[1:4]+q[5:8]+q[9:]
+    # holonomic = sp.Matrix([[q[0]**2+q[1]**2+q[2]**2+q[3]**2-1],
+    #                          [q[4]**2+q[5]**2+q[6]**2+q[7]**2-1],
+    #                          [q[8]**2+q[9]**2+q[10]**2+q[11]**2-1]])
+    # KM = me.KanesMethod(frame_ground, q_ind=q_ind, u_ind=w, kd_eqs=kinematical,
+    #                     q_dependent = q_dep, u_dependent = u0, 
+    #                     configuration_constraints=holonomic,
+    #                     velocity_constraints=holonomic.diff(t))
 
-    (fr, frstar) = KM.kanes_equations(BODY, (FG+DAMP+CONT))
-    MM = KM.mass_matrix_full
-    FO = KM.forcing_full
-    xdot = (KM.q.col_join(KM.u)).diff()
+    # (fr, frstar) = KM.kanes_equations(BODY, (FG+DAMP+CONT))
+    # MM = KM.mass_matrix_full
+    # FO = KM.forcing_full
+    # xdot = (KM.q.col_join(KM.u)).diff()
     
-    return MM,FO,q,w,u0,fr,frstar,kinematical,xdot,holonomic
+    # return MM,FO,q,w,u0,fr,frstar,kinematical,xdot,holonomic
+
+    return q
 
 
+def mulQuat_sp(qa,qb):
+    res = sp.Matrix([[qa[0]*qb[0] - qa[1]*qb[1] - qa[2]*qb[2] - qa[3]*qb[3]],
+                     [qa[0]*qb[1] + qa[1]*qb[0] + qa[2]*qb[3] - qa[3]*qb[2]],
+                     [qa[0]*qb[2] - qa[1]*qb[3] + qa[2]*qb[0] + qa[3]*qb[1]],
+                     [qa[0]*qb[3] + qa[1]*qb[2] - qa[2]*qb[1] + qa[3]*qb[0]]])
+    return res

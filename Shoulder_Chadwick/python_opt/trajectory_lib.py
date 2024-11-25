@@ -7,22 +7,30 @@ import pickle
 
 def exp_trajectory_quat(mot_struct_name,num_nodes):
     mot_struct = sc.io.loadmat(mot_struct_name)
-    time = mot_struct['mot_struct']['time'][0,0][:,0]
+    time = mot_struct['coords_struct']['tout'][0,0][:,0]
     duration = time[-1]
     time_new = np.linspace(0,duration,num_nodes)
     
-    quat_coords = mot_struct['mot_struct']['quat'][0,0]
+    quat_coords = mot_struct['coords_struct']['mot_quaternion_mod'][0,0]
     num_coords = np.shape(quat_coords)[1]
-    quat_new = np.zeros([num_nodes,num_coords])
+    trajectory = np.zeros([num_coords,num_nodes])
     interval_value = duration/(num_nodes - 1)
-    # x0 = mot_struct['mot_struct']['mot_quaternion_IC'][0,0][0]
+    x0 = mot_struct['coords_struct']['mot_quaternion_IC'][0,0][0]
     
     for i in range(num_coords):
         cs = sc.interpolate.CubicSpline(time,quat_coords[:,i])
-        quat_new[:,i] = cs(time_new)
-    trajectory = quat_new.T.flatten()
+        trajectory[i,:] = cs(time_new)
     
-    return trajectory, interval_value, time_new #, x0
+    return trajectory, interval_value, time_new, x0
+
+def exp_trajectory_quat_2_myobj(trajectory):
+    new_traj = trajectory.copy()
+    num_nodes = np.shape(trajectory)[1]
+
+    for i in range(num_nodes):
+        new_traj[4:8,i] = mulQuat_np(trajectory[0:4,i],trajectory[4:8,i]).reshape(4,)
+
+    return new_traj
 
 def exp_trajectory_eul(mot_struct_name,num_nodes):
     mot_struct = sc.io.loadmat(mot_struct_name)
@@ -190,4 +198,92 @@ def Qrm(q):
                       [2*(x*z-y*w), 2*(y*z+x*w), 1-2*(x**2+y**2),0],
                       [0           ,0          ,0             ,1]])
 
+    return res
+
+def mulQuat_sp(qa,qb):
+    res = sp.Matrix([[qa[0]*qb[0] - qa[1]*qb[1] - qa[2]*qb[2] - qa[3]*qb[3]],
+                     [qa[0]*qb[1] + qa[1]*qb[0] + qa[2]*qb[3] - qa[3]*qb[2]],
+                     [qa[0]*qb[2] - qa[1]*qb[3] + qa[2]*qb[0] + qa[3]*qb[1]],
+                     [qa[0]*qb[3] + qa[1]*qb[2] - qa[2]*qb[1] + qa[3]*qb[0]]])
+    return res
+
+def mulQuat_np(qa,qb):
+    res = np.array([[qa[0]*qb[0] - qa[1]*qb[1] - qa[2]*qb[2] - qa[3]*qb[3]],
+                     [qa[0]*qb[1] + qa[1]*qb[0] + qa[2]*qb[3] - qa[3]*qb[2]],
+                     [qa[0]*qb[2] - qa[1]*qb[3] + qa[2]*qb[0] + qa[3]*qb[1]],
+                     [qa[0]*qb[3] + qa[1]*qb[2] - qa[2]*qb[1] + qa[3]*qb[0]]])
+    return res
+
+
+def Qrm(q):
+    w = q[0]
+    x = q[1]
+    y = q[2]
+    z = q[3]
+    res =  sp.Matrix([[1-2*(y**2+z**2), 2*(x*y-z*w), 2*(x*z+y*w),0],
+                      [2*(x*y+z*w), 1-2*(x**2+z**2), 2*(y*z-x*w),0],
+                      [2*(x*z-y*w), 2*(y*z+x*w), 1-2*(x**2+y**2),0],
+                      [0           ,0          ,0             ,1]])
+
+    return res
+
+def YZY_seq(phi1,phi2,phi3):
+    res = R_y(phi1) * R_z(phi2) * R_y(phi3)
+
+    return res
+
+def T_x(x):
+    trans_x = sp.Matrix([[1,0,0,x],
+                         [0,1,0,0],
+                         [0,0,1,0],
+                         [0,0,0,1]])
+    return trans_x
+
+def T_y(y):
+    trans_y = sp.Matrix([[1,0,0,0],
+                         [0,1,0,y],
+                         [0,0,1,0],
+                         [0,0,0,1]])
+    return trans_y
+
+def T_y(z):
+    trans_y = sp.Matrix([[1,0,0,0],
+                         [0,1,0,0],
+                         [0,0,1,z],
+                         [0,0,0,1]])
+    return trans_y
+
+def R_x(phix):
+    rot_phix = sp.Matrix([[1,0          ,0           ,0],
+                         [0,sp.cos(phix),-sp.sin(phix),0],
+                         [0,sp.sin(phix), sp.cos(phix),0],
+                         [0,0          ,0           ,1]])
+    return rot_phix
+
+def R_y(phiy):
+    rot_phiy = sp.Matrix([[sp.cos(phiy) ,0,sp.sin(phiy),0],
+                         [0           ,1,0          ,0],
+                         [-sp.sin(phiy),0,sp.cos(phiy),0],
+                         [0           ,0,0           ,1]])
+    return rot_phiy
+
+def R_z(phiz):
+    rot_phiz = sp.Matrix([[sp.cos(phiz),-sp.sin(phiz),0,0],
+                        [sp.sin(phiz), sp.cos(phiz),0,0],
+                        [0           ,0            ,1,0],
+                        [0           ,0            ,0,1]])
+    return rot_phiz
+
+def position(x,y,z):
+    r = sp.Matrix([x,y,z,1])
+    return r
+
+def G(quat):
+    Q0 = quat[0];
+    Q1 = quat[1];
+    Q2 = quat[2];
+    Q3 = quat[3];
+    res = np.array([[-Q1, Q0, Q3, -Q2],
+                    [-Q2,-Q3, Q0, Q1],
+                    [-Q3, Q2, -Q1, Q0]])
     return res

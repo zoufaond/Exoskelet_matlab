@@ -1694,23 +1694,23 @@ def create_eoms_u0state(model_struct,model_params_struct,initCond_name, derive =
     cont_force2 = [(contact_point2,frame_ground.x*Fx2+frame_ground.y*Fy2+frame_ground.z*Fz2)]
     CONT = cont_force1+cont_force2
 
-    TE,activations = polynomials_quat(model_struct,q,derive,model_params_struct,initCond_name,gen_matlab_functions)
+    # TE,activations = polynomials_quat(model_struct,q,derive,model_params_struct,initCond_name,gen_matlab_functions)
 
-    q_dep = [q[0],q[4],q[8]]
-    q_ind = q[1:4]+q[5:8]+q[9:]
-    holonomic = sp.Matrix([[q[0]**2+q[1]**2+q[2]**2+q[3]**2-1],
-                             [q[4]**2+q[5]**2+q[6]**2+q[7]**2-1],
-                             [q[8]**2+q[9]**2+q[10]**2+q[11]**2-1]])
-    KM = me.KanesMethod(frame_ground, q_ind=q_ind, u_ind=w, kd_eqs=kinematical,
-                        q_dependent = q_dep, u_dependent = u0, 
-                        configuration_constraints=holonomic,
-                        velocity_constraints=holonomic.diff(t))
+    # q_dep = [q[0],q[4],q[8]]
+    # q_ind = q[1:4]+q[5:8]+q[9:]
+    # holonomic = sp.Matrix([[q[0]**2+q[1]**2+q[2]**2+q[3]**2-1],
+    #                          [q[4]**2+q[5]**2+q[6]**2+q[7]**2-1],
+    #                          [q[8]**2+q[9]**2+q[10]**2+q[11]**2-1]])
+    # KM = me.KanesMethod(frame_ground, q_ind=q_ind, u_ind=w, kd_eqs=kinematical,
+    #                     q_dependent = q_dep, u_dependent = u0, 
+    #                     configuration_constraints=holonomic,
+    #                     velocity_constraints=holonomic.diff(t))
 
-    (fr, frstar) = KM.kanes_equations(BODY, (FG+DAMP+CONT))
-    MM = KM.mass_matrix_full
-    FO = KM.forcing_full
-    xdot = (KM.q.col_join(KM.u)).diff()
+    # (fr, frstar) = KM.kanes_equations(BODY, (FG+DAMP+CONT))
+    # MM = KM.mass_matrix_full
+    # FO = KM.forcing_full
+    # xdot = (KM.q.col_join(KM.u)).diff()
     
-    return MM,FO,TE,q,w,u0,fr,frstar,kinematical,xdot,holonomic,activations
+    # return MM,FO,TE,q,w,u0,fr,frstar,kinematical,xdot,holonomic,activations
 
 
