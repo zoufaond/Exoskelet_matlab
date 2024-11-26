@@ -3,25 +3,44 @@ import numpy as np
 import scipy as sc
 import sympy.physics.mechanics as me
 from scipy.spatial.transform import Rotation as spat
+import matplotlib.pyplot as plt
 import pickle
+
+def plot_results(solution, vals , time, num_nodes):
+    solution_mat = solution[:13*num_nodes].reshape(13,num_nodes)
+    sol_glob = solution_mat.copy()
+    sol_glob[0:4,:] = solution_mat[0:4,:]
+    for i in range(num_nodes):
+        sol_glob[4:8,i] = mulQuat_np(solution_mat[0:4,i],solution_mat[4:8,i])[:,0]
+        # print(mulQuat_np(solution_mat[0:4,i],solution_mat[4:8,i])[:,0])
+
+    vals_mat = vals.reshape(13,num_nodes)
+
+    fig, axs = plt.subplots(13)
+    for j in range(13):
+        axs[j].plot(time,vals_mat[j,:],marker = 'o')
+        axs[j].plot(time,sol_glob[j,:])
+        fig.set_figheight(10)
+
+    # print(sol_glob-vals_mat)
 
 def exp_trajectory_quat(mot_struct_name,num_nodes):
     mot_struct = sc.io.loadmat(mot_struct_name)
-    time = mot_struct['coords_struct']['tout'][0,0][:,0]
+    time = mot_struct['mot_struct']['time'][0,0][:,0]
     duration = time[-1]
     time_new = np.linspace(0,duration,num_nodes)
     
-    quat_coords = mot_struct['coords_struct']['mot_quaternion_mod'][0,0]
+    quat_coords = mot_struct['mot_struct']['quat'][0,0]
     num_coords = np.shape(quat_coords)[1]
     trajectory = np.zeros([num_coords,num_nodes])
     interval_value = duration/(num_nodes - 1)
-    x0 = mot_struct['coords_struct']['mot_quaternion_IC'][0,0][0]
+    # x0 = mot_struct['mot_struct']['mot_quaternion_IC'][0,0][0]
     
     for i in range(num_coords):
         cs = sc.interpolate.CubicSpline(time,quat_coords[:,i])
         trajectory[i,:] = cs(time_new)
     
-    return trajectory, interval_value, time_new, x0
+    return trajectory, interval_value, time_new #, x0
 
 def exp_trajectory_quat_2_myobj(trajectory):
     new_traj = trajectory.copy()
