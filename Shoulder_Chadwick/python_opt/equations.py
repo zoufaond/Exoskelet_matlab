@@ -25,6 +25,30 @@ def custom_objective_quat(num_coords,interval_value):
 
     return obj_np,obj_jac_np
 
+def custom_objective_eul(num_coords,interval_value):
+    x = sp.symbols(f'x1:{num_coords+1}')
+    x_traj = sp.symbols(f'x_traj1:{num_coords+1}')
+
+    SCrot = sp.Matrix(x[0:3])
+    scapula_thorax_RM = R_y(x[0]) * R_z(x[1]) * R_x(x[2]) * R_y(x[3]) * R_z(x[4]) * R_x(x[5])
+    scapula_thorax_z = sp.asin(scapula_thorax_RM[1,0])
+    scapula_thorax_x = sp.atan2(-scapula_thorax_RM[1,2],scapula_thorax_RM[1,1])
+    scapula_thorax_y = sp.atan2(-scapula_thorax_RM[2,0],scapula_thorax_RM[0,0])
+    scapula_thorax = sp.Matrix([scapula_thorax_x,scapula_thorax_y,scapula_thorax_z])
+    GH_rot = sp.Matrix(x[6:9])
+    elrot = sp.Matrix(x[9:10])
+
+    obj_SCrot = sp.Matrix([interval_value*sum((SCrot-sp.Matrix(x_traj[0:3])).applyfunc(lambda x: x**2))])
+    obj_scapula_thorax = sp.Matrix([interval_value*sum((scapula_thorax-sp.Matrix(x_traj[3:6])).applyfunc(lambda x: x**2))])
+    obj_GH_rot = sp.Matrix([interval_value*sum((GH_rot-sp.Matrix(x_traj[6:9])).applyfunc(lambda x: x**2))])
+    obj_elrot = sp.Matrix([interval_value*sum((elrot-sp.Matrix(x_traj[9:10])).applyfunc(lambda x: x**2))])
+    obj = obj_SCrot + obj_scapula_thorax + obj_GH_rot + obj_elrot
+    obj_jac = (obj).jacobian(x)[:]
+    obj_np = sp.lambdify((x,x_traj),obj)
+    obj_jac_np = sp.lambdify((x,x_traj),obj_jac)
+
+    return obj_np,obj_jac_np
+
 def polynomials_euler(model_struct,q,derive,model_params_struct, initCond_name, gen_matlab_functions = None):
 
     q_thorax1 = me.dynamicsymbols('q_thorax1')
@@ -1186,57 +1210,56 @@ def create_eoms_eul(model_struct,model_params_struct,initCond_name, derive = 'sy
     cont_force2 = [(contact_point2,frame_ground.x*Fx2+frame_ground.y*Fy2+frame_ground.z*Fz2)]
     CONT = cont_force1+cont_force2
     
-    # KM = me.KanesMethod(frame_ground, q_ind=q, u_ind=u, kd_eqs=kindeq)
-    # (fr, frstar) = KM.kanes_equations(BODY, (FG+DAMP+CONT))
-    # MM = KM.mass_matrix_full
-    # FO = KM.forcing_full
-    # xdot = (KM.q.col_join(KM.u)).diff()
-    # print('equations created')
+    KM = me.KanesMethod(frame_ground, q_ind=q, u_ind=u, kd_eqs=kindeq)
+    (fr, frstar) = KM.kanes_equations(BODY, (FG+DAMP+CONT))
+    MM = KM.mass_matrix_full
+    FO = KM.forcing_full
+    xdot = (KM.q.col_join(KM.u)).diff()
+    print('equations created')
     
-    # if gen_matlab_functions == 1:
+    if gen_matlab_functions == 1:
     
-    #     body_constants = {'I_': inertia,'mass_':mass,'com_':com,'offset_':offset,'c': c,'g': g}
-    #     other_constants = {'offset_humerus_rot':list(offset_humerus_rot),'EL_rot_axis': list(EL_rot_axis),'PSY_rot_axis': list(PSY_rot_axis),
-    #                         'k_contact_in': k_contact_in,'eps_in': eps_in,'contTS': list(contTS),
-    #                         'contAI': list(contAI), 'elips_trans':list(elips_trans), 'elips_dim':list(elips_dim),
-    #                         'k_contact_out': k_contact_out,'eps_out': eps_out,'second_elips_scale':second_elips_scale, 'offset_thorax': list(offset_thorax)}
-    #     usubs = sp.symbols('u1:11')
-    #     qsubs = sp.symbols('q1:11')
+        body_constants = {'I_': inertia,'mass_':mass,'com_':com,'offset_':offset,'c': c,'g': g}
+        other_constants = {'offset_humerus_rot':list(offset_humerus_rot),'EL_rot_axis': list(EL_rot_axis),'PSY_rot_axis': list(PSY_rot_axis),
+                            'k_contact_in': k_contact_in,'eps_in': eps_in,'contTS': list(contTS),
+                            'contAI': list(contAI), 'elips_trans':list(elips_trans), 'elips_dim':list(elips_dim),
+                            'k_contact_out': k_contact_out,'eps_out': eps_out,'second_elips_scale':second_elips_scale, 'offset_thorax': list(offset_thorax)}
+        usubs = sp.symbols('u1:11')
+        qsubs = sp.symbols('q1:11')
 
-    # # sympy dynamicsymbols has to be substituted with symbols (so it can be printed in octave_code)
+    # sympy dynamicsymbols has to be substituted with symbols (so it can be printed in octave_code)
 
-    #     subs_q = {q[i]: qsubs[i] for i in range(len(q))}
-    #     subs_u = {u[i]: usubs[i] for i in range(len(u))}
-    #     mm = me.msubs(KM.mass_matrix_full,subs_q,subs_u)
-    #     fo = me.msubs(KM.forcing_full,subs_q,subs_u)
+        subs_q = {q[i]: qsubs[i] for i in range(len(q))}
+        subs_u = {u[i]: usubs[i] for i in range(len(u))}
+        mm = me.msubs(KM.mass_matrix_full,subs_q,subs_u)
+        fo = me.msubs(KM.forcing_full,subs_q,subs_u)
 
-    #     MatlabFunction(function = mm,
-    #                    fun_name = 'mm_eul',assignto = 'mm',
-    #                    coordinates = qsubs,
-    #                    speeds = usubs,
-    #                    inputs = [],
-    #                    body_constants = body_constants,
-    #                    segments = segment,
-    #                    other_constants=other_constants,
-    #                    muscle_constants = {},
-    #                    parameters = [first_elips_scale],
-    #                    folder = 'euler')
-    #     MatlabFunction(function = fo,
-    #                    fun_name = 'fo_eul',assignto = 'fo',
-    #                    coordinates = qsubs,
-    #                    speeds = usubs,
-    #                    inputs = [],
-    #                    body_constants = body_constants,
-    #                    segments = segment,
-    #                    other_constants=other_constants,
-    #                    muscle_constants = {},
-    #                    parameters = [first_elips_scale],
-    #                    folder = 'euler')
+        MatlabFunction(function = mm,
+                       fun_name = 'mm_eul',assignto = 'mm',
+                       coordinates = qsubs,
+                       speeds = usubs,
+                       inputs = [],
+                       body_constants = body_constants,
+                       segments = segment,
+                       other_constants=other_constants,
+                       muscle_constants = {},
+                       parameters = [first_elips_scale],
+                       folder = 'euler')
+        MatlabFunction(function = fo,
+                       fun_name = 'fo_eul',assignto = 'fo',
+                       coordinates = qsubs,
+                       speeds = usubs,
+                       inputs = [],
+                       body_constants = body_constants,
+                       segments = segment,
+                       other_constants=other_constants,
+                       muscle_constants = {},
+                       parameters = [first_elips_scale],
+                       folder = 'euler')
 
-    #     print('matlab functions generated')
+        print('matlab functions generated')
 
-    # return MM,FO,q,u,fr,frstar,kindeq,xdot
-    return q
+    return MM,FO,q,u,fr,frstar,kindeq,xdot
 
 def muscle_force(act, lmt, fmax, lceopt, lslack):
     lm = lmt - lslack
@@ -1382,7 +1405,7 @@ def Qrm(q):
 
     return res
 
-def joint_spring(q,model_params_struct,initCond_name):
+def joint_spring_euler(q,model_params_struct,initCond_name):
     q0_joint = model_params_struct['params'][initCond_name][0,0]['initCondEul'].item()
     # joint_stiffnes = model_params_struct['params']['model'].item()['joint_stiffnes'][0,0].item()
     joint_stiffness = sp.symbols('joint_stiffness')
@@ -1398,8 +1421,25 @@ def joint_spring(q,model_params_struct,initCond_name):
     # res = sp.Matrix([SCx_spring,SCy_spring,SCz_spring,0,0,0,0,0,0,0])
 
     return res
-    
-    
+
+def joint_spring_quat(q,model_params_struct,initCond_name):
+    Qeq = model_params_struct['params'][initCond_name][0,0]['initCondQuat'].item()
+    joint_stiffness = sp.symbols('joint_stiffness')
+    Qdif = mulQuat_sp(Qinv_sp(Qeq),q)
+
+    angle = 2*sp.atan2(sp.sqrt(Qdif[1]**2 + Qdif[2]**2 + Qdif[3]**2),Qdif[0])
+    scale = 1/sp.sqrt(1-Qdif[0]**2 + 1e-3)
+    axis = scale * sp.Matrix([Qdif[1],Qdif[2],Qdif[3]])
+    res = -axis * angle * joint_stiffness
+
+    return res
+
+
+
+def Qinv_sp(q):
+    res = sp.Matrix([q[0],-q[1],-q[2],-q[3]])
+
+    return res
 
 def MatlabFunction(function,fun_name,assignto,coordinates,speeds,inputs,body_constants,segments,other_constants,muscle_constants,parameters,folder):
     list_of_variables = [speeds,inputs, body_constants, muscle_constants, parameters]

@@ -1,11 +1,21 @@
 addpath Functions/
 
 %choose two results struct to compare
-folder_path = 'Motions/Abduction/';
-motion_name = 'abduction.mat';
-folders = {[folder_path,'results_euler_EulInit_200_01.mat'],[folder_path,'results_quat_EulInit_150_01.mat']};
+folder_path = 'Motions/Steering/';
+motion_name = 'steering.mat';
+
+% folders = {[folder_path,'results_quat_QuatInit_100.mat']};
 OS_struct = load([folder_path,motion_name]);
-plot_kinematics(folders,OS_struct)
+muscle_group = {'trap_scap','serr_ant','delt_scap'};
+
+
+weights = {'100','150','200','250'};
+for iweight = 1:length(weights)
+    folders = {[folder_path,'results_euler_QuatInit_',weights{iweight},'.mat'],[folder_path,'results_quat_QuatInit_',weights{iweight},'.mat']};
+    plot_kinematics(folders,OS_struct);
+    plot_activations(folders,muscle_group,OS_model);
+end
+
 
 muscle_group = {'trap_scap','serr_ant','delt_scap','delt_clav','infra'};
 OS_model = [folder_path,'OS_model.mat'];

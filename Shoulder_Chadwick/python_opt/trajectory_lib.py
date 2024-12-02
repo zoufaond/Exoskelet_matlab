@@ -42,7 +42,7 @@ def exp_trajectory_quat(mot_struct_name,num_nodes):
     
     return trajectory, interval_value, time_new #, x0
 
-def exp_trajectory_quat_2_myobj(trajectory):
+def exp_trajectory_quat_myobj(trajectory):
     new_traj = trajectory.copy()
     num_nodes = np.shape(trajectory)[1]
 
@@ -59,16 +59,30 @@ def exp_trajectory_eul(mot_struct_name,num_nodes):
     
     eul_coords = mot_struct['mot_struct']['euler'][0,0] #mot_euler_mod
     num_coords = np.shape(eul_coords)[1]
-    eul_new = np.zeros([num_nodes,num_coords])
+    eul_new = np.zeros([num_coords,num_nodes])
     interval_value = duration/(num_nodes - 1)
     # x0 = mot_struct['mot_struct']['mot_euler_IC'][0,0][0]
     
     for i in range(num_coords):
         cs = sc.interpolate.CubicSpline(time,eul_coords[:,i])
-        eul_new[:,i] = cs(time_new)
-    trajectory = eul_new.T.flatten()
+        eul_new[i,:] = cs(time_new)
+    trajectory = eul_new
     
     return trajectory, interval_value, time_new #, x0
+
+def exp_trajectory_eul_myobj(trajectory):
+    new_traj = trajectory.copy()
+    num_nodes = np.shape(trajectory)[1]
+
+    for i in range(num_nodes):
+        scapula_thorax_RM = R_y_np(trajectory[0,i]) @ R_z_np(trajectory[1,i]) @ R_x_np(trajectory[2,i]) @ R_y_np(trajectory[3,i]) @ R_z_np(trajectory[4,i]) @ R_x_np(trajectory[5,i])
+        scapula_thorax_z = np.arcsin(scapula_thorax_RM[1,0])
+        scapula_thorax_x = np.arctan2(-scapula_thorax_RM[1,2],scapula_thorax_RM[1,1])
+        scapula_thorax_y = np.arctan2(-scapula_thorax_RM[2,0],scapula_thorax_RM[0,0])
+        new_traj[3,i] = scapula_thorax_x
+        new_traj[4,i] = scapula_thorax_y
+        new_traj[5,i] = scapula_thorax_z
+    return new_traj
 
 def das_trajectory(data_struct,num_nodes,duration,weight, coords):
     time = np.linspace(0.0, duration, num=num_nodes)
@@ -148,6 +162,33 @@ def sol2mot_quat(solution, num_nodes, num_q, time, file_name = 'traj_opt.mot'):
 
     print('Saved to .mot file')
 
+def sol2mot_eul(solution, num_nodes, num_q, time, file_name = 'traj_opt.mot'):
+    traj_eul = np.vstack(np.split(solution[:(num_nodes*num_q)],num_q)).T
+    traj_eul = traj_eul*180/np.pi
+    print(traj_eul)
+    
+    text_file = open(f"{file_name}","w")
+    with open(f'{file_name}',"w") as text_file:
+        print(f'Simulation',file=text_file)
+        print(f'nRows={num_nodes}',file=text_file)
+        print(f'nColumns={10+5}',file = text_file)
+        print(f'endheader',file = text_file)
+        print(f'time  TH_x TH_y TH_z SC_y  SC_z  SC_x  AC_y  AC_z  AC_x  GH_y  GH_z  GH_yy  EL_x  PS_y',file = text_file)
+        
+        for i in range(num_nodes):
+            for j in range(10):
+                if j == 0 :
+                    print(f'{time[i]}  0.000000  0.000000  0.000000  {traj_eul[i,j]}', end = '  ',file = text_file)
+                elif j == 9:
+                    print(f'{traj_eul[i,j]}  0.000000', file = text_file)
+                else:
+                    print(f'{traj_eul[i,j]}', end = '  ',file = text_file)
+                        
+        
+    text_file.close()
+
+    print('Saved to .mot file')
+
 def sol2struct(solution,activations,num_q,num_states,num_nodes,time,num_iter_sol,time2sol,file_name):
     
     trajectories = np.zeros([num_nodes, num_q])
@@ -186,7 +227,7 @@ def input2mat(solution, num_nodes, num_states, activations, time):
     return data
 
 def quat2eul(quat,seq):
-    rotm = Qrm(quat)
+    rotm = Qrm_np(quat)
 
     if seq == 'YZY':
         z = np.arccos(rotm[1,1])
@@ -207,7 +248,7 @@ def eul2quat(eul,seq):
     
     return quat
 
-def Qrm(q):
+def Qrm_np(q):
     w = q[0]
     x = q[1]
     y = q[2]
@@ -234,7 +275,7 @@ def mulQuat_np(qa,qb):
     return res
 
 
-def Qrm(q):
+def Qrm_sp(q):
     w = q[0]
     x = q[1]
     y = q[2]
@@ -272,23 +313,44 @@ def T_y(z):
                          [0,0,0,1]])
     return trans_y
 
-def R_x(phix):
+def R_x_sp(phix):
     rot_phix = sp.Matrix([[1,0          ,0           ,0],
                          [0,sp.cos(phix),-sp.sin(phix),0],
                          [0,sp.sin(phix), sp.cos(phix),0],
                          [0,0          ,0           ,1]])
     return rot_phix
 
-def R_y(phiy):
+def R_y_sp(phiy):
     rot_phiy = sp.Matrix([[sp.cos(phiy) ,0,sp.sin(phiy),0],
                          [0           ,1,0          ,0],
                          [-sp.sin(phiy),0,sp.cos(phiy),0],
                          [0           ,0,0           ,1]])
     return rot_phiy
 
-def R_z(phiz):
+def R_z_sp(phiz):
     rot_phiz = sp.Matrix([[sp.cos(phiz),-sp.sin(phiz),0,0],
                         [sp.sin(phiz), sp.cos(phiz),0,0],
+                        [0           ,0            ,1,0],
+                        [0           ,0            ,0,1]])
+    return rot_phiz
+
+def R_x_np(phix):
+    rot_phix = np.array([[1,0          ,0           ,0],
+                         [0,np.cos(phix),-np.sin(phix),0],
+                         [0,np.sin(phix), np.cos(phix),0],
+                         [0,0          ,0           ,1]])
+    return rot_phix
+
+def R_y_np(phiy):
+    rot_phiy = np.array([[np.cos(phiy) ,0,np.sin(phiy),0],
+                         [0           ,1,0          ,0],
+                         [-np.sin(phiy),0,np.cos(phiy),0],
+                         [0           ,0,0           ,1]])
+    return rot_phiy
+
+def R_z_np(phiz):
+    rot_phiz = np.array([[np.cos(phiz),-np.sin(phiz),0,0],
+                        [np.sin(phiz), np.cos(phiz),0,0],
                         [0           ,0            ,1,0],
                         [0           ,0            ,0,1]])
     return rot_phiz
