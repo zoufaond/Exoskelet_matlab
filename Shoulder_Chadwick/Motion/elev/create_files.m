@@ -1,7 +1,7 @@
 addpath ..\..\Functions\
 addpath ..\
 clearvars
-motion_file = readmatrix('elevation.txt');
+motion_file = readmatrix('scabduction.txt');
 % data_model = load('mot_struct_rigged.mat');
 % 
 % coords_struct_clavmod.tout = data_model.coords_struct.tout;
@@ -10,13 +10,13 @@ motion_file = readmatrix('elevation.txt');
 % data2mot(coords_struct_clavmod,'abd_rigged.mot','euler', 'struct');
 
 
-
 % initPosOpt = data_model.params.InitPosOptEul;
 mot_unpoly.tout = motion_file(:,1)-motion_file(1,1);
 mot_unpoly.data = motion_file(:,8:end-1)*pi/180;
 % 
 res = motion_polyfit(motion_file,'no plot_polyfits');
-data2mot(res,'elevation.mot','euler', 'struct');
+res.data(:,8) = res.data(:,8) - 0.3 * (0.94 - res.data(:,8));
+data2mot(res,'scabduction_GL.mot','euler', 'struct');
 % data2mot(mot_unpoly,'steering_not_polyfitted.mot','euler', 'struct')
 % 
 % coords_struct.tout = motion_file(:,1)-motion_file(1,1);

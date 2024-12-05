@@ -1,7 +1,7 @@
-function res = change_clavx(mot_eul)
+function res = change_clavx(mot_eul, change_value)
 
 mot_eul = mot_eul;
-clavicle_xrot_change = [0,0,0.2];
+clavicle_xrot_change = [0,0,change_value];
 numdata = length(mot_eul(:,1));
 mot_eul_modified = zeros(size(mot_eul));
 

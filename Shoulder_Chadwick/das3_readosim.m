@@ -320,13 +320,13 @@ for imus = 1:model.nMus
     insertion_frame = convertStringsToChars(erase(wrap_info(imus).GeometryPath.PathPointSet.objects.PathPoint(2).socket_parent_frame,"/bodyset/"));
     origin_position = str2num(wrap_info(imus).GeometryPath.PathPointSet.objects.PathPoint(1).location);
     insertion_position = str2num(wrap_info(imus).GeometryPath.PathPointSet.objects.PathPoint(2).location);
+    model.muscles{imus}.origin_frame = origin_frame;
+    model.muscles{imus}.insertion_frame = insertion_frame;
+    model.muscles{imus}.origin_position = origin_position;
+    model.muscles{imus}.insertion_position = insertion_position;
 
     if strcmp(origin_frame,"thorax") && isWrapped == 0
         model.muscles{imus}.isWrapped = 0;
-        model.muscles{imus}.origin_frame = origin_frame;
-        model.muscles{imus}.insertion_frame = insertion_frame;
-        model.muscles{imus}.origin_position = origin_position;
-        model.muscles{imus}.insertion_position = insertion_position;
     else
         model.muscles{imus}.isWrapped = 1;
     end

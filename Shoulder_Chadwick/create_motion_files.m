@@ -1,5 +1,6 @@
 clearvars
-motion = 'Motions\Steering\steering.mot';
+motion = 'Motions\Scabduction_noised\scabduction_training.mot';
+motion_traj = 'Motions\Scabduction_noised\scabduction_GL.mot';
 [motion_path,motion_name,extension] = fileparts(motion);
 osim_file = 'das3.osim';
 mydir = 'Polyfiles';
@@ -8,7 +9,8 @@ musclepoly_file = 'musclepoly';
 das3_polynomials(osim_file,mydir,motion,musclepoly_file);
 model = das3_readosim(osim_file,[motion_path,'\',mydir '\' musclepoly_file]);
 save([motion_path,'\','OS_model'],'model')
-motion2struct(motion)
+% motion2struct(motion)
+% motion2struct(motion_traj)
 
 
 

@@ -125,7 +125,7 @@ for imus = 1:length(model.muscles)
             disp([mus.name, ' lengths and moment arms saved.']);
         end
         
-        make_mot_file([motion_path,'\',mydir '\angles_' mus.name '.mot'],alljnts,dof_names);
+        % make_mot_file([motion_path,'\',mydir '\angles_' mus.name '.mot'],alljnts,dof_names);
         % disp(['Opensim motion file for muscle ', mus.name, ' created.']);
 
 
@@ -344,12 +344,12 @@ for istep = 1:size(angles,1)
         
         % change the value of the dof by +-0.0001 and find length:
         % currentDof.setValue(state,angles(istep,Dofs(idof))-0.0001,1);
-        % L1 = currentMuscle.getLength(state);
-        % currentDof.setValue(state,angles(istep,Dofs(idof))+0.0001,1);                
-        % L2 = currentMuscle.getLength(state);
+        L1 = currentMuscle.getLength(state);
+        currentDof.setValue(state,angles(istep,Dofs(idof))+0.0001,1);                
+        L2 = currentMuscle.getLength(state);
         
-        % minusdLdq(istep,idof) = -(L2-L1)/0.0002;
-        minusdLdq(istep,idof) = currentMuscle.computeMomentArm(state,currentDof);
+        minusdLdq(istep,idof) = -(L2-L1)/0.0002;
+        % minusdLdq(istep,idof) = currentMuscle.computeMomentArm(state,currentDof);
         
         % set dof to original value
         % currentDof.setValue(state,angles(istep,Dofs(idof)),1); 
