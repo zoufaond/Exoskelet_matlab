@@ -335,21 +335,20 @@ for istep = 1:size(angles,1)
     
     % get length
     lengths(istep) = currentMuscle.getLength(state);
-    % currentMuscle.computeMomentArm(state,'SCx')
 
     % get moment arms
     for idof = 1:num_request_dofs
         dofindex  = Dofs(idof)-1;
         currentDof = CoordSet.get(Dofs(idof)-1);
         
-        % change the value of the dof by +-0.0001 and find length:
-        % currentDof.setValue(state,angles(istep,Dofs(idof))-0.0001,1);
-        L1 = currentMuscle.getLength(state);
-        currentDof.setValue(state,angles(istep,Dofs(idof))+0.0001,1);                
-        L2 = currentMuscle.getLength(state);
-        
-        minusdLdq(istep,idof) = -(L2-L1)/0.0002;
-        % minusdLdq(istep,idof) = currentMuscle.computeMomentArm(state,currentDof);
+        % % change the value of the dof by +-0.0001 and find length:
+        % % currentDof.setValue(state,angles(istep,Dofs(idof))-0.0001,1);
+        % L1 = currentMuscle.getLength(state);
+        % currentDof.setValue(state,angles(istep,Dofs(idof))+0.0001,1);                
+        % L2 = currentMuscle.getLength(state);
+        % 
+        % minusdLdq(istep,idof) = -(L2-L1)/0.0002;
+        minusdLdq(istep,idof) = currentMuscle.computeMomentArm(state,currentDof);
         
         % set dof to original value
         % currentDof.setValue(state,angles(istep,Dofs(idof)),1); 
@@ -593,7 +592,7 @@ for imus = 1:length(muscles)
         [RMSmin, col] = min(RMSnew);
         % if the change in error is less than 5%, stop without adding this term
        % if ((i>1)&&((RMS - RMSmin)/RMS<0.01))
-        if ((i>1)&&((RMS - RMSmin)/RMS<0.05))
+        if ((i>1)&&((RMS - RMSmin)/RMS<0.03))
             fprintf('Change in error: %3f. No more terms added.\n ',(RMS - RMSmin)/RMS);
             fprintf(logfile,'Change in error: %3f. No more terms added.\n ',(RMS - RMSmin)/RMS);
             break;
@@ -622,9 +621,9 @@ for imus = 1:length(muscles)
         polylist = [polylist(1:(col-1),:);polylist((col+1):ncolumns,:)];
         % stop adding terms if RMS error in fvectors is less than
         % momarm_error
-        if ((RMS<=momarm_error))
-            break;
-        end
+        % if ((RMS<=momarm_error))
+        %     break;
+        % end
     end 		% and go find the next term
 
 % save muscle model in structure mus_model

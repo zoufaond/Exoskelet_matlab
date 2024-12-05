@@ -1,12 +1,12 @@
 addpath Functions/
 
 %choose two results struct to compare
-folder_path = 'Motions/Scabduction_GL/';
+folder_path = 'Motions/Scabduction_noised/';
 motion_name = 'scabduction_GL.mat';
 
 % folders = {[folder_path,'results_quat_QuatInit_100.mat']};
 OS_struct = load([folder_path,motion_name]);
-muscle_group = {'serr_ant'};
+muscle_group = {'bic_b'};
 OS_model = [folder_path,'OS_model.mat'];
 
 addpath([folder_path,'Poly_functions/'])
@@ -195,16 +195,16 @@ indexes = find(mask);
 
 for imus = 1:length(muscle_names)
     current_mus = model.model.muscles{indexes(imus)};
-    current_name = current_mus.osim_name
+    current_name = current_mus.osim_name;
     dof_names = current_mus.dof_names;
     imomarms = zeros(11,101);
     JQuatInJEul = zeros(11,101);
     % size(motion_euler)
     % momarms_eul = examine_momarms(current_mus.Euler,dof_names,motion_euler);
     for iframe=1:numdata
-        jac_eul = jacobiannoise_eul(0,motion_euler(iframe,:)');
+        jac_eul = jacobiannoi_eul(0,[motion_euler(iframe,:),1e-6]');
         imomarms(:,iframe) = jac_eul(:,indexes(imus));
-        jacinspat = JacInSpatnoise_quat(0,motion_quat_orig(iframe,:)');
+        jacinspat = JacInSpatnoi_quat(0,[motion_quat_orig(iframe,:),1e-6]');
         ijacinspat = jacinspat(:,indexes(imus));
 
          for j = 1:3
@@ -212,8 +212,8 @@ for imus = 1:length(muscle_names)
             JQuatInJEul((j-1)*3+1:(j-1)*3+3,iframe) = JQuatInJEulCur;
          end
 
-         JQuatInJEul(10:11,iframe) = jacinspat(10:11);
-
+         JQuatInJEul(10,iframe) = ijacinspat(10);
+         JQuatInJEul(11,iframe) = ijacinspat(11);
     end
 
     [lengths_euler, dLdq_euler] = opensim_get_polyvalues(motion_euler, indexes(imus), current_mus.dof_indeces);

@@ -90,7 +90,7 @@ def polynomials_euler(model_struct,q,derive,model_params_struct, motion_folder =
             lceopt.append(muscle['lceopt'][0,0].item())
             lslack.append(muscle['lslack'][0,0].item())       
             
-    mus_lengths = sp.zeros(nmus,1)
+    mus_lengths_full = sp.zeros(nmus,1)
     mus_forces = sp.zeros(nmus,1)
     
     for imus in range(nmus):
@@ -129,16 +129,16 @@ def polynomials_euler(model_struct,q,derive,model_params_struct, motion_folder =
 
                 L = L + term
                 
-        mus_lengths[imus] = L
+        mus_lengths_full[imus] = L
         mus_forces[imus] = muscle_force(actSym[imus],L,fmax[imus],lceopt[imus],lslack[imus])
         
-    jacobian = -mus_lengths.jacobian(qpol[3:]).T
-    FQ = jacobian * mus_forces
+    jacobian_full = -mus_lengths_full.jacobian(qpol[3:]).T
+    FQ = jacobian_full * mus_forces
     TE = sp.Matrix(FQ[:-1])
     
     TE = TE.subs(q_new[13],0)
-    jacobian = jacobian.subs(q_new[13],0)
-    mus_lengths = mus_lengths.subs(q_new[13],0)
+    jacobian = jacobian_full.subs(q_new[13],0)
+    mus_lengths = mus_lengths_full.subs(q_new[13],0)
     mus_forces = mus_forces.subs(q_new[13],0)
     
     symbols_list = TE.free_symbols
@@ -164,13 +164,13 @@ def polynomials_euler(model_struct,q,derive,model_params_struct, motion_folder =
     # jnt_spring = joint_spring(q,model_params_struct,initCond_name)
     
     if gen_matlab_functions == 1:
-        qsubs = sp.symbols('qsubs1:11')
+        qsubs = sp.symbols('qsubs1:12')
         q_subs_dict = dict(zip(qpol[3:],qsubs))
         segments = []
         TE_conoid_subbed = me.msubs(TE_conoid,q_subs_dict)
         TE_subbed = me.msubs(TE,q_subs_dict)
-        jacobian_subbed = me.msubs(jacobian,q_subs_dict)
-        mus_lengths_subbed = me.msubs(mus_lengths,q_subs_dict)
+        jacobian_subbed = me.msubs(jacobian_full,q_subs_dict)
+        mus_lengths_subbed = me.msubs(mus_lengths_full,q_subs_dict)
         mus_forces_subbed = me.msubs(mus_forces,q_subs_dict)
         # jnt_spring_subbed = me.msubs(jnt_spring,q_subs_dict)
         
@@ -208,7 +208,7 @@ def polynomials_euler(model_struct,q,derive,model_params_struct, motion_folder =
         #                parameters = [],
         #                folder = 'euler')
         MatlabFunction(function = jacobian_subbed,
-                       fun_name = 'jacobian_eul',assignto = 'jacobian',
+                       fun_name = 'jacobiannoi_eul',assignto = 'jacobian',
                        coordinates = qsubs,
                        speeds = [],
                        inputs = [],
@@ -286,9 +286,9 @@ def polynomials_quat(model_struct,q,derive,model_params_struct, motion_folder = 
             lceopt.append(muscle['lceopt'][0,0].item())
             lslack.append(muscle['lslack'][0,0].item())
             
-    mus_lengths = sp.zeros(nmus,1)
+    mus_lengths_full = sp.zeros(nmus,1)
     mus_forces = sp.zeros(nmus,1)
-    JacInSpat = sp.zeros(11,nmus)
+    JacInSpat_full = sp.zeros(11,nmus)
     
     
     for imus in range(nmus):
@@ -309,7 +309,7 @@ def polynomials_quat(model_struct,q,derive,model_params_struct, motion_folder = 
             TEel = 1/2 * sp.Matrix(Jac[16:18])
             
             iJacInSpat = sp.Matrix(TEsc).col_join(TEac).col_join(TEgh).col_join(TEel)
-            JacInSpat[:,imus] = iJacInSpat
+            JacInSpat_full[:,imus] = iJacInSpat
 
             # print('analytic')
             
@@ -341,19 +341,19 @@ def polynomials_quat(model_struct,q,derive,model_params_struct, motion_folder = 
             TEgh = invJtrans(q_new[12:16])*sp.Matrix(jac[9:12])
             TEel = sp.Matrix(jac[12:14])
             iJacInSpat = sp.Matrix(TEsc).col_join(TEac).col_join(TEgh).col_join(TEel)
-            JacInSpat[:,imus] = iJacInSpat
+            JacInSpat_full[:,imus] = iJacInSpat
             # print('poly')
             
-        mus_lengths[imus] = L     
+        mus_lengths_full[imus] = L     
         mus_forces[imus] = muscle_force(actSym[imus],L,fmax[imus],lceopt[imus],lslack[imus])
         
     
-    FQ = JacInSpat * mus_forces
+    FQ = JacInSpat_full * mus_forces
     
     TE = sp.Matrix(FQ[:-1])
     TE = TE.subs(q_new[17],0)
-    JacInSpat = JacInSpat.subs(q_new[17],0)
-    mus_lengths = mus_lengths.subs(q_new[17],0)
+    JacInSpat = JacInSpat_full.subs(q_new[17],0)
+    mus_lengths = mus_lengths_full.subs(q_new[17],0)
     mus_forces = mus_forces.subs(q_new[17],0)
     
     
@@ -368,13 +368,13 @@ def polynomials_quat(model_struct,q,derive,model_params_struct, motion_folder = 
     TE_subs = me.msubs(TE, act_subs)
     
     if gen_matlab_functions == 1:
-        qsubs = sp.symbols('qsubs0:13')
+        qsubs = sp.symbols('qsubs0:14')
         q_subs_dict = dict(zip(q_new[4:],qsubs))
         segments = []
         # TE_conoid_subbed = me.msubs(TE_conoid,q_subs_dict)
         TE_subbed = me.msubs(TE,q_subs_dict)
-        JacInSpat_subbed = me.msubs(JacInSpat,q_subs_dict)
-        mus_lengths_subbed = me.msubs(mus_lengths,q_subs_dict)
+        JacInSpat_subbed = me.msubs(JacInSpat_full,q_subs_dict)
+        mus_lengths_subbed = me.msubs(mus_lengths_full,q_subs_dict)
         mus_forces_subbed = me.msubs(mus_forces,q_subs_dict)
         
         # MatlabFunction(function = TE_conoid_subbed[:-1],
@@ -409,7 +409,7 @@ def polynomials_quat(model_struct,q,derive,model_params_struct, motion_folder = 
         #                muscle_constants = muscle_constants,
         #                parameters = [])
         MatlabFunction(function = JacInSpat_subbed,
-                       fun_name = 'JacInSpat_quat',assignto = 'JacInSpat',
+                       fun_name = 'JacInSpatnoi_quat',assignto = 'JacInSpat',
                        coordinates = qsubs,
                        speeds = [],
                        inputs = [],

@@ -2,7 +2,7 @@ clearvars
 addpath ..\..\Functions\
 addpath ..\..\
 motion_file = readmatrix('scabduction.txt');
-[time, trajectory] = motion_polyfit(motion_file,'no plot_polyfits',40);
+[time, trajectory] = motion_polyfit(motion_file,'no plot_polyfits',30);
 numdata = length(time);
 osim_file = 'das3.osim';
 
@@ -12,7 +12,7 @@ OS_model = load("OS_model.mat");
 for i=1:numdata
     trajectory_training = [trajectory_training; trajectory(i,:)];
 
-    change_vals = linspace(-10,20,5)*pi/180;
+    change_vals = linspace(-10,20,6)*pi/180;
     for ival = 1:length(change_vals)
         trajectory_rotclav = change_clavx(trajectory(i,:),change_vals(ival));
         trajectory_training = [trajectory_training; trajectory_rotclav];
