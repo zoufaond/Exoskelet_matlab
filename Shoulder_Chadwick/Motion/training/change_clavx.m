@@ -1,18 +1,20 @@
-function res = change_clavx(q, change_value)
+function res = change_clavx(q, rotx_value)
 
-clavicle_xrot_change = [0,0,change_value];
+% clavicle_xrot_change = [0,0,change_value];
 mot_eul_modified = zeros(size(q));
 
 Rscap = R_scap_glob(q(1:3),q(4:6));
-new_xrot = q(1:3) + clavicle_xrot_change;
-fun = @(x) sum((Rscap - R_scap_glob(new_xrot,[x(1),x(2),x(3)])).^2,"all");
-x0 = [q(4:6)];
-A = [];
-b = [];
-Aeq = [];
-beq = [];
-x = fmincon(fun,x0,A,b,Aeq,beq);
+new_xrot = [q(1),q(2),rotx_value];
+% fun = @(x) sum((Rscap - R_scap_glob(new_xrot,[x(1),x(2),x(3)])).^2,"all");
+fun = @(x) Rscap - R_scap_glob(new_xrot,[x(1),x(2),x(3)]);
 
+x0 = [q(4:6)];
+% A = [];
+% b = [];
+% Aeq = [];
+% beq = [];
+% x = fmincon(fun,x0,A,b,Aeq,beq);
+x = fsolve(fun,x0);
 mot_eul_modified(1:3) = new_xrot;
 mot_eul_modified(4:6) = x;
 

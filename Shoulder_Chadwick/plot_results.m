@@ -1,22 +1,30 @@
 addpath Functions/
 
 %choose two results struct to compare
-folder_path = 'Motions/Scabduction_noised/';
-motion_name = 'scabduction_GL.mat';
+folder_path = 'Motions/Steering/';
+motion_name = 'Steering.mat';
 
 % folders = {[folder_path,'results_quat_QuatInit_100.mat']};
 OS_struct = load([folder_path,motion_name]);
-muscle_group = {'bic_b'};
+muscle_group = {'delt_scap'};
 OS_model = [folder_path,'OS_model.mat'];
+addpath([folder_path,'Poly_functions/']);
 
-addpath([folder_path,'Poly_functions/'])
+% weights = {'300'};
 
-weights = {'150'}; %,'150','200','250'};
+% weights = {'100','150','200','250','300'};
 for iweight = 1:length(weights)
-    folders = {[folder_path,'results_euler_QuatInit_',weights{iweight},'.mat'],[folder_path,'results_quat_QuatInit_',weights{iweight},'.mat']};
+    % folders = {[folder_path,'res_euler_Steering_',weights{iweight},'.mat'],[folder_path,'res_quat_Steering_',weights{iweight},'.mat']};
+    folders = {[folder_path,'res_euler_Steering_250.mat'],[folder_path,'res_quat_Steering_250.mat']};
+
+    % folders = {[folder_path,'res_euler_Scabduction_GL2_',weights{iweight},'.mat'],[folder_path,'res_quat_Scabduction_GL2_',weights{iweight},'.mat']};
+    % folders = {[folder_path,'results_euler_QuatInit_',weights{iweight},'.mat'],[folder_path,'results_quat_QuatInit_',weights{iweight},'.mat']};
     plot_kinematics(folders,OS_struct);
-    % plot_activations(folders,muscle_group,OS_model);
-    plot_muscles(folders,muscle_group, OS_model);
+    % plot_conoid_length(folders);
+    % plot_SCx(folders);
+
+    plot_activations(folders,muscle_group,OS_model);
+    % plot_muscles(folders,muscle_group,OS_model);
 end
 % 
 % 
@@ -25,6 +33,38 @@ end
 % EMG_struct = 'Experimental_data/EMG_struct.mat';
 % plot_activations_EMG(folders, EMG_struct, OS_model);
 % plot_activations(folders,muscle_group,OS_model)
+
+function plot_SCx(folders)
+    GH_names = {'GHy','GHz','GHyy'};
+    num_coords = 10;
+    euler_struct = load(folders{1});
+    time = euler_struct.data.tout;
+    traj_eul = euler_struct.data.trajectories;
+    quat_struct = load(folders{2});
+    traj_quat_orig = quat_struct.data.trajectories;
+    traj_quat_eul = quat2eul_motion(traj_quat_orig);
+
+    for i = 1:length(time)
+        newSCx_eul(i,:) = min_conoid_length(traj_eul(i,:));
+        length_eul(i,:) = conoid_length(traj_eul(i,4:6));
+        newSCx_quat(i,:) = min_conoid_length(traj_quat_eul(i,:));
+    end
+
+    figure
+    subplot(2,1,1)
+    plot(time,rad2deg(newSCx_eul(:,3)),time,rad2deg(traj_eul(:,3)),'*')
+    legend('Min length','simulation')
+    subplot(2,1,2)
+    plot(time,length_eul)
+    title('eul')
+
+    figure
+    plot(time,rad2deg(newSCx_quat(:,3)),time,rad2deg(traj_quat_eul(:,3)),'*')
+    legend('Min length','simulation')
+    title('quat')
+    
+
+end
 
 function plot_activations_EMG(folders, EMG_struct, OS_model)
 
@@ -110,58 +150,97 @@ for imus_group = 1:length(muscle_group)
         for i = 1:length(folders)
         current_struct = load(folders{i});
         activations = current_struct.data.inputs(:,mask);
+        if i == 1
+            activations_eul_obj = sum(activations.^2,'all');
+        end
+        if i == 2
+            activations_quat_obj = sum(activations.^2,'all');
+        end
         time = current_struct.data.tout;
         plot(time,activations(:,j),'LineWidth',1);hold on
         xlabel('time')
         ylabel('a[-]')
         end
         title(current_names(j), 'Interpreter', 'none')
+        
+
     end
     fig = gcf;
     fig.Position(3) = fig.Position(3) + 250;
     Lgnd = legend('eul','quat');
     Lgnd.Position(1) = 0.01;
     Lgnd.Position(2) = 0.5;
+    text1 = annotation('textbox',[0.7,0.12,0.1,0.1],'string',{['Act Eul = ', num2str(activations_eul_obj),newline,'Act Quat = ', num2str(activations_quat_obj)]});
     sgtitle('Activations', 'Interpreter', 'none')
 end
 
 end
 
 function plot_kinematics(folders, OS_struct)
-dofs_names = {'SCy','SCz','SCx','ACy','ACz','ACx','GHy','GHz','GHyy','ELx','PSy'};
+dofs_names = {'SCy','SCz','SCx','Yscap in global','Zscap in global','Xscap in global','Yhum in global','Zhum in global','YYhum in global','ELx','PSy'};
+GH_names = {'GHy','GHz','GHyy'};
 num_coords = 10;
-figure
-tiledlayout(4,3);
+euler_struct = load(folders{1});
+time = euler_struct.data.tout;
+traj_eul = euler_struct.data.trajectories;
+quat_struct = load(folders{2});
+traj_quat_orig = quat_struct.data.trajectories;
+traj_quat_eul = quat2eul_motion(traj_quat_orig);
+traj_eul_obj = create_objective_traj_eul(traj_eul);
+traj_quat_eul_obj = create_objective_traj_eul(traj_quat_eul);
+OS_interp = interp1(OS_struct.mot_struct.time,OS_struct.mot_struct.euler,time',"spline");
+OS_interp_obj = create_objective_traj_eul(OS_interp);
+OS_interp_quat = eul2quat_motion(OS_interp);
+OS_interp_quat_obj = create_objective_traj_quat(OS_interp_quat);
+traj_quat_obj = create_objective_traj_quat(traj_quat_orig);
 
-for i = 1:num_coords
-    nexttile
-    for j = 1:length(folders)
-        jmot = load(folders{j});
-        time = jmot.data.tout';
-        trajectory = jmot.data.trajectories;
-        if size(trajectory,2) == 13
-            trajectory_euler = quat2eul_motion(trajectory);
-        else
-            trajectory_euler = trajectory;
-        end
-        plot(time,trajectory_euler(:,i)*180/pi,'--','LineWidth',1.5)
-        hold on
-        title(dofs_names{i})
-        % plot(time, trajectory_quat(:,i),'-.','LineWidth',1.5)
-        % hold on
+euler_act_obj = sum(euler_struct.data.inputs.^2,'all');
+quat_act_obj = sum(quat_struct.data.inputs.^2,'all');
+
+figure
+idof = 1;
+iplot = 1;
+for i = 1:10
+    subplot(5,3,iplot)
+    plot(time,rad2deg(traj_eul_obj(:,idof)),'--','LineWidth',1.5)
+    hold on
+    plot(time,rad2deg(traj_quat_eul_obj(:,idof)),'-.','LineWidth',1.5)
+    hold on
+    title(dofs_names{idof})
+    if i ~= 3
+        plot(time,rad2deg(OS_interp_obj(:,idof)),'g','LineWidth',1.5)
     end
-    time = jmot.data.tout';
-    OS_interp = spline(OS_struct.mot_struct.time,OS_struct.mot_struct.euler(:,i),time');
-    %
-    plot(time,OS_interp*180/pi,'g','LineWidth',1.5)
+    axis([-inf inf -inf inf])  
 
     xlabel('Time [s]')
     ylabel('Angle [deg]')
-    % legend({'Euler','Quat','Experiment'})
 
-
+    if idof == 9
+        for GHdof = 1:3
+        GHidof = GHdof+6;
+        GHiplot = GHdof+9;
+        subplot(5,3,GHiplot)
+        plot(time,rad2deg(traj_eul(:,GHidof)),'--','LineWidth',1.5)
+        hold on
+        plot(time,rad2deg(traj_quat_eul(:,GHidof)),'-.','LineWidth',1.5)
+        hold on
+        title(GH_names{GHdof})
+        plot(time,rad2deg(OS_interp(:,GHidof)),'g','LineWidth',1.5)
+        if GHdof == 2
+            yline(0,'r')
+        end
+        axis([-inf inf min(rad2deg(OS_interp(:,GHidof)))-10 max(rad2deg(OS_interp(:,GHidof)))+10])
+    
+        xlabel('Time [s]')
+        ylabel('Angle [deg]')
+        end
+        iplot = iplot+3;
+    end
+    idof = idof+1;
+    iplot = iplot+1;
 
 end
+
 
 fig = gcf;
 fig.Position(3) = fig.Position(3) + 250;
@@ -169,6 +248,35 @@ Lgnd = legend('Euler','Quat','Experiment');
 Lgnd.FontSize = 13;
 Lgnd.Position(1) = 0.4;
 Lgnd.Position(2) = 0.1;
+text1 = annotation('textbox',[0.7,0.12,0.1,0.1],'string',{['Eul Act = ', num2str(euler_act_obj),newline,'Quat Act = ', num2str(quat_act_obj),]});
+
+%%% QUAT KINEMATICS %%%
+
+figure
+idof = 1;
+iplot = 1;
+for i = 1:13
+    subplot(5,4,i)
+    plot(time,(traj_quat_obj(:,i)),'--','LineWidth',1.5)
+    hold on
+    plot(time,OS_interp_quat_obj(:,i))
+    % title(dofs_names{idof})
+    axis([-inf inf -inf inf])  
+
+    xlabel('Time [s]')
+    ylabel('Angle [deg]')
+
+end
+
+fig = gcf;
+fig.Position(3) = fig.Position(3) + 250;
+Lgnd = legend('Quat','Experiment');
+Lgnd.FontSize = 13;
+Lgnd.Position(1) = 0.4;
+Lgnd.Position(2) = 0.1;
+
+%%% END QUAT KINEMATICS %%%
+
 end
 
 function plot_muscles(folders,muscle_group, OS_model)
@@ -181,6 +289,8 @@ struct_quat = load(folders{2});
 motion_quat_orig = struct_quat.data.trajectories;
 motion_quat_euler = quat2eul_motion(motion_quat_orig);
 
+
+
 model = load(OS_model);
 num_mus = length(model.model.muscles);
 for i=1:num_mus
@@ -189,49 +299,142 @@ end
 
 mask = startsWith(all_muscle_names, muscle_group);
 muscle_names = all_muscle_names(1,mask);
-dofs_names = {'SCy','SCz','SCx','ACy','ACz','ACx','GHy','GHz','GHyy','ELx','PSy'};
 alljoints = {'YZX','YZX','YZY'};
+joints_names = {'SCy', 'SCz', 'SCx', 'ACy', 'ACz', 'ACx'};
 indexes = find(mask);
 
 for imus = 1:length(muscle_names)
     current_mus = model.model.muscles{indexes(imus)};
     current_name = current_mus.osim_name;
     dof_names = current_mus.dof_names;
-    imomarms = zeros(11,101);
-    JQuatInJEul = zeros(11,101);
-    % size(motion_euler)
-    % momarms_eul = examine_momarms(current_mus.Euler,dof_names,motion_euler);
+    JQuatInJEul = zeros(numdata,11);
+    dof_indeces = current_mus.dof_indeces-3;
+    [lengths_eul,jacobian_eul] = momarms(current_mus.Euler, dof_indeces, motion_euler);
+    motion_quat_WO_real = motion_quat_orig(:,[2:4,6:8,10:12,13]);
+    [lengths_quat,jacobian_quat_current] = momarms(current_mus.Quaternion, dof_indeces, motion_quat_WO_real);
+    jacobian_quat = zeros(numdata,11);
+    jacobian_quat(:,dof_indeces) = jacobian_quat_current;
+
     for iframe=1:numdata
-        jac_eul = jacobiannoi_eul(0,[motion_euler(iframe,:),1e-6]');
-        imomarms(:,iframe) = jac_eul(:,indexes(imus));
-        jacinspat = JacInSpatnoi_quat(0,[motion_quat_orig(iframe,:),1e-6]');
-        ijacinspat = jacinspat(:,indexes(imus));
-
-         for j = 1:3
-            JQuatInJEulCur = GeomJ(motion_euler(iframe,(j-1)*3+1:(j-1)*3+3),alljoints{j})*(ijacinspat((j-1)*3+1:(j-1)*3+3));
-            JQuatInJEul((j-1)*3+1:(j-1)*3+3,iframe) = JQuatInJEulCur;
-         end
-
-         JQuatInJEul(10,iframe) = ijacinspat(10);
-         JQuatInJEul(11,iframe) = ijacinspat(11);
+        for j = 1:3
+            ind3 = ((j-1)*3+1:(j-1)*3+3);
+            ind4 = ((j-1)*4+1:(j-1)*4+4);
+            JQuatInSpat = invJtrans(motion_quat_orig(iframe,ind4)) * jacobian_quat(iframe,ind3)';
+            JQuatInJEul(iframe,ind3) = GeomJ(motion_quat_euler(iframe,ind3),alljoints{j})*(JQuatInSpat);
+        end
+         JQuatInJEul(iframe,10) = jacobian_quat(10);
+         JQuatInJEul(iframe,11) = jacobian_quat(11);
     end
 
-    [lengths_euler, dLdq_euler] = opensim_get_polyvalues(motion_euler, indexes(imus), current_mus.dof_indeces);
-    [lengths_quat, dLdq_quat] = opensim_get_polyvalues(motion_quat_euler, indexes(imus), current_mus.dof_indeces);
-    max_momarm = max([max(abs(dLdq_euler),[],'all'),max(abs(dLdq_quat),[],'all'),max(abs(JQuatInJEul),[],'all'),max(abs(imomarms),[],'all')]) + 0.01;
+    [lengths_OS_euler, dLdq_euler] = opensim_get_polyvalues(motion_euler, indexes(imus), current_mus.dof_indeces);
+    [lengths_OS_quat, dLdq_quat] = opensim_get_polyvalues(motion_quat_euler, indexes(imus), current_mus.dof_indeces);
+    max_momarm = max([max(abs(dLdq_euler),[],'all'),max(abs(dLdq_quat),[],'all'),max(abs(JQuatInJEul),[],'all'),max(abs(jacobian_eul),[],'all')]) + 0.01;
     figure
     
     for j=1:length(current_mus.dof_indeces)
         subplot(length(current_mus.dof_indeces),2,j*2-1)
-        plot(time,dLdq_euler(:,j),time,imomarms(current_mus.dof_indeces(j)-3,:))
+        plot(time,dLdq_euler(:,j),time,-jacobian_eul(:,j))
+        if j==1
+            title(['Eul, Number of params:', string(current_mus.Euler.lparam_count)])
+        end
+        % plot(time,dLdq_euler(:,j),time,imomarms(current_mus.dof_indeces(j)-3,:))
         axis([-inf inf -max_momarm max_momarm])
         subplot(length(current_mus.dof_indeces),2,j*2)
-        plot(time,dLdq_quat(:,j),time,JQuatInJEul(current_mus.dof_indeces(j)-3,:))
+        plot(time,dLdq_quat(:,j),time,-JQuatInJEul(:,dof_indeces(j)))
+        if j==1
+            title(['Quat, Number of params:', string(current_mus.Quaternion.lparam_count)'])
+        end
         axis([-inf inf -max_momarm max_momarm])
     end
     % title(current_name)
+    legend('osim','my')
+    sgtitle(current_name)
 
+    if strcmp(current_name,'serr_ant_6')
+
+        figure
+        tiledlayout(3,3);
+        nexttile([1,3])
+        plot(time,lengths_eul,'--','LineWidth',1.5);hold on
+        plot(time,lengths_quat,'-.','LineWidth',1.5);hold on
+        plot(time,lengths_OS_euler,'g','LineWidth',1.5);hold off
+        title('Muscle length and moment arms approximation')
+        ylabel('length [m]')
+        xlabel('time [s]')
+        axis([-inf inf 0 0.2])
+
+        for j=1:length(current_mus.dof_indeces)
+            nexttile
+            plot(time,-jacobian_eul(:,j),'--','LineWidth',1.5);hold on
+            plot(time,-JQuatInJEul(:,dof_indeces(j)),'-.','LineWidth',1.5);hold on
+            plot(time,dLdq_euler(:,j),'g','LineWidth',1.5);
+            axis([-inf inf -max_momarm max_momarm])
+            ylabel('MA [m]')
+            xlabel('time [s]')
+            title(joints_names{j})
+        end
+        fig = gcf;
+        fig.Position(3:4)=[700,350];
+        Lgnd = legend('Euler approx','Quat approx','OpenSim');
+        Lgnd.FontSize = 11;
+        Lgnd.Position(1) = 0.7;
+        Lgnd.Position(2) = 0.65;
+
+        LRMS_eul = sqrt(sum((lengths_OS_euler-lengths_eul').^2,'all')/numdata)*1000
+        LRMS_quat = sqrt(sum((lengths_OS_euler-lengths_quat').^2,'all')/numdata)*1000
+        RRMS_eul = sqrt(sum((dLdq_euler+jacobian_eul(:,1:6)).^2,'all')/numdata)*1000
+        RRMS_quat = sqrt(sum((dLdq_euler+JQuatInJEul(:,1:6)).^2,'all')/numdata)*1000
+
+        exportgraphics(fig,'Serr_ant_12_approx.png','Resolution',600);
+        
+        
+
+    end
 end
+
+% %%%%%%%%%%%%%%%%% plot with one trajectory %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+% for imus = 1:3 %length(muscle_names)
+%     current_mus = model.model.muscles{indexes(imus)};
+%     current_name = current_mus.osim_name;
+%     dof_names = current_mus.dof_names;
+%     JQuatInJEul = zeros(numdata,11);
+%     dof_indeces = current_mus.dof_indeces-3;
+%     jacobian_eul = momarms(current_mus.Euler, dof_indeces, motion_quat_euler);
+%     motion_quat_WO_real = motion_quat_orig(:,[2:4,6:8,10:12,13]);
+%     jacobian_quat_current = momarms(current_mus.Quaternion, dof_indeces, motion_quat_WO_real);
+%     jacobian_quat = zeros(numdata,11);
+%     jacobian_quat(:,dof_indeces) = jacobian_quat_current;
+% 
+%     for iframe=1:numdata
+%         for j = 1:3
+%             ind3 = ((j-1)*3+1:(j-1)*3+3);
+%             ind4 = ((j-1)*4+1:(j-1)*4+4);
+%             JQuatInSpat = invJtrans(motion_quat_orig(iframe,ind4)) * jacobian_quat(iframe,ind3)';
+%             JQuatInJEul(iframe,ind3) = GeomJ(motion_quat_euler(iframe,ind3),alljoints{j})*(JQuatInSpat);
+%         end
+%          JQuatInJEul(iframe,10) = jacobian_quat(10);
+%          JQuatInJEul(iframe,11) = jacobian_quat(11);
+%     end
+% 
+%     [lengths_osim, dLdq_osim] = opensim_get_polyvalues(motion_quat_euler, indexes(imus), current_mus.dof_indeces);
+%     max_momarm = max([max(abs(dLdq_euler),[],'all'),max(abs(dLdq_quat),[],'all'),max(abs(JQuatInJEul),[],'all'),max(abs(jacobian_eul),[],'all')]) + 0.01;
+% 
+%     figure
+%     for j=1:length(current_mus.dof_indeces)
+%         subplot(floor(length(current_mus.dof_indeces)/3),3,j)
+%         plot(time,-jacobian_eul(:,j))
+%         hold on
+%         plot(time,-JQuatInJEul(:,dof_indeces(j)))
+%         hold on
+%         plot(time,dLdq_osim(:,j))
+% 
+%         axis([-inf inf -max_momarm max_momarm])
+%     end
+%     legend('Euler','Quaternion','Osim')
+    % sgtitle([current_name,' Eul, Quat nterms:',string(current_mus.Euler.lparam_count),string(current_mus.Quaternion.lparam_count)]) 
+
+% end
 
 end
 
@@ -274,6 +477,13 @@ function res = GeomJ(phi,seq)
     end
 end
 
+function res = mulQuat(qa,qb)
+    res = [ qa(1)*qb(1) - qa(2)*qb(2) - qa(3)*qb(3) - qa(4)*qb(4);
+            qa(1)*qb(2) + qa(2)*qb(1) + qa(3)*qb(4) - qa(4)*qb(3);
+            qa(1)*qb(3) - qa(2)*qb(4) + qa(3)*qb(1) + qa(4)*qb(2);
+            qa(1)*qb(4) + qa(2)*qb(3) - qa(3)*qb(2) + qa(4)*qb(1)];
+end
+
 function res = G(Q)
     Q0 = Q(1);
     Q1 = Q(2);
@@ -283,6 +493,93 @@ function res = G(Q)
             -Q2,-Q3, Q0, Q1;
             -Q3, Q2, -Q1, Q0];
 end
+
+function rot_phix = R_x(phix)
+    rot_phix = [1,0        , 0        ,0;
+                0,cos(phix),-sin(phix),0;
+                0,sin(phix), cos(phix),0;
+                0,0        , 0        ,1];
+end
+
+function rot_phiy = R_y(phiy)
+    rot_phiy = [cos(phiy),0,sin(phiy),0;
+                0        ,1,0        ,0;
+               -sin(phiy),0,cos(phiy),0;
+                0        ,0,0        ,1];
+end
+
+function rot_phiz = R_z(phiz)
+    rot_phiz = [cos(phiz),-sin(phiz),0,0;
+                sin(phiz), cos(phiz),0,0;
+                0           ,0      ,1,0;
+                0           ,0      ,0,1];
+end
+
+function res = YZX_seq(angles)
+    res = R_y(angles(1)) * R_z(angles(2)) * R_x(angles(3));
+end
+
+function res = YZY_seq(angles)
+    res = R_y(angles(1)) * R_z(angles(2)) * R_y(angles(3));
+end
+
+function r = position(vec)
+    r = [vec(1);vec(2);vec(3);1];
+end
+
+function trans = T_trans(vec)
+    trans = [1,0,0,vec(1);
+               0,1,0,vec(2);
+               0,0,1,vec(3);
+               0,0,0,1];
+end
+
+function res = Qrm(q)
+    % rotation matrix from quaternion
+    w = q(1);
+    x = q(2);
+    y = q(3);
+    z = q(4);
+    Rq =  [1-2*(y^2+z^2), 2*(x*y-z*w), 2*(x*z+y*w);
+     2*(x*y+z*w), 1-2*(x^2+z^2), 2*(y*z-x*w);
+     2*(x*z-y*w), 2*(y*z+x*w), 1-2*(x^2+y^2)];
+    res = [Rq,zeros(3,1);
+            zeros(1,3),1];
+end
+
+function res = create_objective_traj_eul(trajectory)
+    res = zeros(size(trajectory));
+    for istep = 1:size(trajectory,1)
+        scapula_thorax = YZX_seq(trajectory(istep,1:3)) * YZX_seq(trajectory(istep,4:6));
+        humerus_thorax = scapula_thorax * YZY_seq (trajectory(istep,7:9));
+        res(istep,4:6) = rotm2eul(scapula_thorax(1:3,1:3),"YZX");
+        res(istep,7:9) = rotm2eul(humerus_thorax(1:3,1:3),"YZY");
+    end
+    res(:,[1:3,10]) = trajectory(:,[1:3,10]);
+end
+
+function res = create_objective_traj_quat(trajectory)
+    res = zeros(size(trajectory));
+    for istep = 1:size(trajectory,1)
+        scapula_thorax = mulQuat(trajectory(istep,1:4),trajectory(istep,5:8));
+        humerus_thorax = mulQuat(scapula_thorax,trajectory(istep,(9:12)));
+        res(istep,5:8) = scapula_thorax;
+        res(istep,9:12) = humerus_thorax;
+    end
+    res(:,[1:4,13]) = trajectory(:,[1:4,13]);
+end
+
+% function res = hum_in_glob_quat(trajectory)
+%     res = zeros(size(trajectory));
+%     for istep = 1:size(trajectory,1)
+%         scapula_thorax = mulQuat(trajectory(1:4),trajectory(5:8));
+%         humerus_thorax = mulQuat(scapula_thorax,trajectory(9:12));
+%         res(istep,4:6) = rotm2eul(scapula_thorax(1:3,1:3),"YZX");
+%         res(istep,7:9) = rotm2eul(humerus_thorax(1:3,1:3),"YZY");
+%     end
+%     res(:,[1:3,10]) = trajectory(:,[1:3,10]);
+% end
+
 
 function [lengths, minusdLdq] = opensim_get_polyvalues(angles, iMus, Dofs)
 % This function calculates the length and -dL/dq of muscle "Mus" about dof set 
@@ -303,7 +600,7 @@ function [lengths, minusdLdq] = opensim_get_polyvalues(angles, iMus, Dofs)
 % name in Mus
 
 import org.opensim.modeling.*
-osimfile = 'das3.osim';
+osimfile = 'das3_noserrant12.osim';
 Mod = Model(osimfile);
 
 % this is needed to get the GH lines of action in the scapular frame
@@ -540,3 +837,89 @@ end
 
 end
 
+function [L,pmoment_arms] = momarms(musmodel, dof_indeces, angles)
+% plot momentarm-angle data
+
+% choose a subset of "angles" that contains only 100 points
+
+% ...or use all angles
+indeces = 1:size(angles,1);
+sangles = angles(:,dof_indeces);
+
+% calculate moment arms from polynomial
+pmoment_arms = zeros(length(indeces),length(dof_indeces));
+for iframe = 1:length(indeces)
+    for i=1:musmodel.lparam_count
+
+        % add this term's contribution to the muscle length 
+        term = musmodel.lcoefs(i);
+
+        for j=1:length(dof_indeces)
+            for k=1:musmodel.lparams(i,j)
+                term = term * sangles(iframe,j); % this creates lcoeff(i) * product of all angles to the power lparams(i,j) 
+            end
+        end
+
+        % first derivatives of length with respect to all q's
+        for  k=1:length(dof_indeces)
+            % derivative with respect to q_k is zero unless exponent is 1 or higher and q is not zero
+            if ((musmodel.lparams(i,k) > 0) && (sangles(iframe,k)))	
+                dterm = musmodel.lparams(i,k)*term/sangles(iframe,k);
+                pmoment_arms(iframe,k) = pmoment_arms(iframe,k) + dterm;
+            end
+        end
+    end
+end
+
+L = zeros(1,length(indeces)); % Initialize the muscle length
+for iframe = 1:length(indeces)
+    Lterm = 0;
+    for i=1:musmodel.lparam_count
+        % Add this term's contribution to the muscle length
+        term = musmodel.lcoefs(i);
+        for j = 1:length(dof_indeces)
+            for k = 1:musmodel.lparams(i, j)
+                term = term * sangles(iframe,j);
+            end
+        end
+        Lterm = Lterm + term;
+    end
+
+    L(iframe) = Lterm;
+end
+
+end
+
+function res = min_conoid_length(traj)
+    fun = @(x) conoid_length(x(2:4));
+    % fun = @(x) sum((Rscap - R_scap_glob([traj(1),traj(2),x(1)],[x(2),x(3),x(4)])).^2,"all");
+    nonlcon = @(x) mycon(x,traj);
+    A = [];
+    b = [];
+    Aeq = [];
+    beq = [];
+    lb = ones(1,4)*(-pi);
+    ub = ones(1,4)*pi;
+    x0 = traj(3:6);
+    x = fmincon(fun,x0,A,b,Aeq,beq,lb,ub,nonlcon);
+    
+    mot_eul_modified = traj;
+    mot_eul_modified(3:6) = x;
+    res = mot_eul_modified;
+end
+
+function res = conoid_length(AC)
+    O = [0.1165,-0.0041,0.0143];
+    I = T_trans([0.1575,0,0]) * YZX_seq(AC) * position([-0.0536, -0.0009, -0.0266]);
+    res = sqrt((O(1) - I(1))^2 + (O(2) - I(2))^2 + (O(3) - I(3))^2);
+end
+
+function [c,ceq] = mycon(x,traj)
+    Rscap = R_scap_glob(traj(1:3),traj(4:6));
+    ceq = Rscap - R_scap_glob([traj(1),traj(2),x(1)],[x(2),x(3),x(4)]);
+    c = [];
+end
+
+function res = R_scap_glob(jnt1,jnt2)
+    res = YZX_seq(jnt1) * YZX_seq(jnt2);
+end

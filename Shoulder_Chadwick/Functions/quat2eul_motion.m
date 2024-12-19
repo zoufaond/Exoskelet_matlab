@@ -14,5 +14,8 @@ GH_Eul = rotm2eul(GH_RM,'YZY');
 
 EL_x = quat(:,13);
 
+
 res = [SC_Eul,AC_Eul,GH_Eul,EL_x];
+
+
 end

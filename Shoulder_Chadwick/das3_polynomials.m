@@ -95,7 +95,7 @@ for imus = 1:length(model.muscles)
     jnts2change_seq = {'YZX','YZX','YZX','YZY'};
     num_jnts2change = length(jnts2change_seq);
     numdata = size(alljnts,1);
-    
+
     % change sequence of euler angles to quaternions
     for i=1:num_jnts2change
         quat = zeros(numdata,4);
@@ -124,7 +124,7 @@ for imus = 1:length(model.muscles)
             save([motion_path,'\',mydir '\path_' mus.name],'alljnts','alllengths','alljntsQ','alljntsQA','allmomarms','quat_J');        
             disp([mus.name, ' lengths and moment arms saved.']);
         end
-        
+
         % make_mot_file([motion_path,'\',mydir '\angles_' mus.name '.mot'],alljnts,dof_names);
         % disp(['Opensim motion file for muscle ', mus.name, ' created.']);
 
@@ -162,7 +162,6 @@ function [lengths, minusdLdq,quat_J, GHfvecs] = opensim_get_polyvalues(Mod, angl
 % 11/25/19: Update by Derek Wolf: iMus is used to access the muscle and a
 % check is used to determine if the name (with no underscores) matches the
 % name in Mus
-
 import org.opensim.modeling.*
 % initialize the system to get the initial state
 state = Mod.initSystem;
@@ -349,6 +348,9 @@ for istep = 1:size(angles,1)
         % 
         % minusdLdq(istep,idof) = -(L2-L1)/0.0002;
         minusdLdq(istep,idof) = currentMuscle.computeMomentArm(state,currentDof);
+        if anynan(minusdLdq)
+            error('NaN in moment arm')
+        end
         
         % set dof to original value
         % currentDof.setValue(state,angles(istep,Dofs(idof)),1); 
@@ -592,7 +594,7 @@ for imus = 1:length(muscles)
         [RMSmin, col] = min(RMSnew);
         % if the change in error is less than 5%, stop without adding this term
        % if ((i>1)&&((RMS - RMSmin)/RMS<0.01))
-        if ((i>1)&&((RMS - RMSmin)/RMS<0.03))
+        if ((i>1)&&((RMS - RMSmin)/RMS<0.05))
             fprintf('Change in error: %3f. No more terms added.\n ',(RMS - RMSmin)/RMS);
             fprintf(logfile,'Change in error: %3f. No more terms added.\n ',(RMS - RMSmin)/RMS);
             break;

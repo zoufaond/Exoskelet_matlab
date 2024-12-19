@@ -47,7 +47,12 @@ def exp_trajectory_quat_myobj(trajectory):
     num_nodes = np.shape(trajectory)[1]
 
     for i in range(num_nodes):
-        new_traj[4:8,i] = mulQuat_np(trajectory[0:4,i],trajectory[4:8,i]).reshape(4,)
+        SC_wo_x = Qrm_np(trajectory[0:4,i]) @ position(0.6,0,0)
+        new_traj[0:3,i] = SC_wo_x[0:3]
+        scapula_thorax = mulQuat_np(trajectory[0:4,i],trajectory[4:8,i]).reshape(4,)
+        new_traj[4:8,i] = scapula_thorax
+        humerus_thorax = mulQuat_np(scapula_thorax,trajectory[8:12,i]).reshape(4,)
+        new_traj[8:12,i] = humerus_thorax
 
     return new_traj
 
@@ -82,6 +87,13 @@ def exp_trajectory_eul_myobj(trajectory):
         new_traj[3,i] = scapula_thorax_x
         new_traj[4,i] = scapula_thorax_y
         new_traj[5,i] = scapula_thorax_z
+        humerus_thorax_RM = scapula_thorax_RM @ R_y_np(trajectory[6,i]) @ R_z_np(trajectory[7,i]) @ R_y_np(trajectory[8,i])
+        humerus_thorax_z = np.arccos(humerus_thorax_RM[1,1])
+        humerus_thorax_yy = np.arctan2(humerus_thorax_RM[1,2],humerus_thorax_RM[1,0])
+        humerus_thorax_y = np.arctan2(humerus_thorax_RM[2,1],-humerus_thorax_RM[0,1])
+        new_traj[6,i] = humerus_thorax_y
+        new_traj[7,i] = humerus_thorax_z
+        new_traj[8,i] = humerus_thorax_yy
     return new_traj
 
 def das_trajectory(data_struct,num_nodes,duration,weight, coords):
@@ -165,7 +177,6 @@ def sol2mot_quat(solution, num_nodes, num_q, time, file_name = 'traj_opt.mot'):
 def sol2mot_eul(solution, num_nodes, num_q, time, file_name = 'traj_opt.mot'):
     traj_eul = np.vstack(np.split(solution[:(num_nodes*num_q)],num_q)).T
     traj_eul = traj_eul*180/np.pi
-    print(traj_eul)
     
     text_file = open(f"{file_name}","w")
     with open(f'{file_name}',"w") as text_file:
@@ -356,7 +367,7 @@ def R_z_np(phiz):
     return rot_phiz
 
 def position(x,y,z):
-    r = sp.Matrix([x,y,z,1])
+    r = np.array([x,y,z,1])
     return r
 
 def G(quat):

@@ -1,6 +1,6 @@
-function data2mot(angles,name,type, output_from)
+function data2mot(angles,time_simulation,name,type, output_from)
 
-time = linspace(0,1,size(angles,1));
+time = linspace(0,time_simulation(end),size(angles,1));
 
 if strcmp('quaternion', type)
     if strcmp('simulink',  output_from)

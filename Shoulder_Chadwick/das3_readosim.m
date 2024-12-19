@@ -293,7 +293,7 @@ model.nMus = MuscleSet.getSize();
 % Probe = Umberger2010MuscleMetabolicsProbe.safeDownCast(Mod.getProbeSet().get('metabolics'));
 
 counter=0;
-osim_file = 'das3.osim';
+osim_file = 'das3_noserrant12.osim';
 xml_file = strrep(osim_file,'.osim','.xml');
 copyfile(osim_file,xml_file);
 osim_struct = readstruct(xml_file);
